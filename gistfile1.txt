@@ -75,6 +75,9 @@ mayaguez.2015 <- d.2015$Freq[agrep(pattern = "Mayaguez",d.2015$Var1)]/(demo2015$
 
 ponce.2015 <- d.2015$Freq[agrep(pattern = "Ponce",d.2015$Var1)]/(demo2015$Yauco+demo2015$Juana.Diaz+demo2015$Santa.Isabel+demo2015$Villalba+demo2015$Penuelas+demo2015$Guayanilla+
                                                                            demo2015$Guanica+demo2015$Ponce)*100000
+                                                                           
+  fajardo.2015 <- d.2015$Freq[agrep(pattern = "Fajardo",d.2015$Var1)]/(demo2015$Fajardo+demo2015$Luquillo+demo2015$Ceiba+demo2015$
+                                                                        Rio.Grande+demo2015$Vieques+demo2015$Culebra)*100000
 
 
 #colocamos toda la información en un data frame para facilitar el análisis.
