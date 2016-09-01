@@ -89,3 +89,5 @@ d.region #Imprime la base de datos creada
 #Buscamos la incidencia de asesinato en Puerto rico
 ic.pr.2015 <- sum(d.2015$Freq)/demo2015$Total*100000#calcula la tasa de Puerto Rico para el año 2015
 ic.pr.2015 #Imprime la tasa de incidensia
+
+#Creado por: Angel Velazquez en Agosto 31, 2016
