@@ -6,15 +6,22 @@
 # la población de las regiones policiacas de Puerto Rico durante los diferentes años. 
 # Para efectos de este ejemplo se calculará los asesinatos en Puerto Rico para 2015.
 
+#NOTA: Cada linea que empieza con # el programa lo detecta como un comentario.
+
 install.packages(RSocrata)#Instala el paquete RSocrata para obtener la data directamente de www.data.pr.gov. Esta línea es necesaria una sola vez
 library(RSocrata)# carga la libreria de Socrata al programa R
+
+#Debido al tamaño de la data de crímenes toma tiempo accesarla directamente desde el portal. Asumiendo que datos crímenes se han bajado del internet al ordenador.
+setwd("C:/Users/...(dirección o folder donde vamos a estar trabajando)")#Fija el directorio en la computadora donde vamos a trabajar.
+d.ic <- read.table("(Nombre del archivo).csv", header = TRUE ,sep="," )#Carga la base de datos de incidencia criminal al programa R.
+#Si no desea bajar el archivo puede optener los mismo resultados utilizando un paquete llamado Socrata.
+#url.crimen="https://www.indicadores.pr/Demographics/Estimados-anuales-poblacionales-por-municipio-y-Pu/8ey7-awsw"
+#d.demo= read.socrata(url.crimen)
+
 #Base de datos online
 url.crimen="https://www.indicadores.pr/Demographics/Estimados-anuales-poblacionales-por-municipio-y-Pu/8ey7-awsw"
 d.demo= read.socrata(url.crimen)
 
-#Debido al tamaño de la data de crímenes toma tiempo accesarla directamente desde el portal. Asumiendo que datos crímenes se han bajado del internet al ordenador
-setwd("C:/Users/...(dirección o folder donde vamos a estar trabajando)")#Fija el directorio en la computadora donde vamos a trabajar.
-d.ic <- read.table("(Nombre del archivo).csv", header = TRUE ,sep="," )#Carga la base de datos de incidencia criminal al programa R.
 
 #Con la función "colnames" cambiamos el nombre de cada variable en los datos de población que acabamos de cargar.
 #Este paso es importante, ya que algunos "characters" no suben correctamente.
