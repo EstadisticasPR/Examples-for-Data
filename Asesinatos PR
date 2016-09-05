@@ -6,7 +6,7 @@
 # la población de las regiones policiacas de Puerto Rico durante los diferentes años. 
 # Para efectos de este ejemplo se calculará los asesinatos en Puerto Rico para 2015.
 
-#NOTA: Cada linea que empieza con # el programa lo detecta como un comentario.
+#NOTA: Cada linea que empieza con "#" el programa lo detecta como un comentario.
 
 install.packages(RSocrata)#Instala el paquete RSocrata para obtener la data directamente de www.data.pr.gov. Esta línea es necesaria una sola vez
 library(RSocrata)# carga la libreria de Socrata al programa R
