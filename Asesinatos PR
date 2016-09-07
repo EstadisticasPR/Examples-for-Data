@@ -8,15 +8,13 @@
 
 #NOTA: Cada linea que empieza con "#" el programa lo detecta como un comentario.
 
-install.packages(RSocrata)#Instala el paquete RSocrata para obtener la data directamente de www.data.pr.gov. Esta línea es necesaria una sola vez
-library(RSocrata)# carga la libreria de Socrata al programa R
-
-#Debido al tamaño de la data de crímenes toma tiempo accesarla directamente desde el portal. Asumiendo que datos crímenes se han bajado del internet al ordenador.
-setwd("C:/Users/...(dirección o folder donde vamos a estar trabajando)")#Fija el directorio en la computadora donde vamos a trabajar.
-d.ic <- read.table("(Nombre del archivo).csv", header = TRUE ,sep="," )#Carga la base de datos de incidencia criminal al programa R.
-#Si no desea bajar el archivo puede optener los mismo resultados utilizando un paquete llamado Socrata.
-#url.crimen="https://www.indicadores.pr/Demographics/Estimados-anuales-poblacionales-por-municipio-y-Pu/8ey7-awsw"
-#d.demo= read.socrata(url.crimen)
+#Primero preparamos las herramientas para trabajar en el ejemplo.
+install.packages("data.table")#Instala todos los componentes que necesitamos para trabajar en el ejemplo.
+library(data.table) #Carga la libreria de Socrata al programa R
+url.crimen="https://data.pr.gov/api/views/pzaz-tkx9/rows.csv" #Dirección datos de crimenes en Puerto Rico
+url.demografia="https://www.indicadores.pr/api/views/5pce-675z/rows.csv" #Dirección datos demográficos en Puerto Rico
+d.ic= fread(url.crimen) #Carga la base de datos de incidencia criminal al programa R.
+d.demo= fread(url.demografia) #Carga la base de datos demográfica al programa R.
 
 #Base de datos online
 url.crimen="https://www.indicadores.pr/Demographics/Estimados-anuales-poblacionales-por-municipio-y-Pu/8ey7-awsw"
@@ -30,7 +28,7 @@ colnames(d.demo) <- c('Year',"Adjuntas","Aguada","Aguadilla","Aguas.Buenas","Aib
                       "Florida", "Guanica","Guayama","Guayanilla","Guaynabo","Gurabo","Hatillo","Hormigueros","Humacao","Isabela","Jayuya","Juana.Diaz","Juncos",
                       "Lajas","Lares","Las.Marias","Las.Piedras","Loiza","Luquillo","Manati","Maricao","Maunabo","Mayaguez","Moca","Morovis","Naguabo","Naranjito",
                       "Orocovis","patillas","Penuelas","Ponce","Quebradillas","Rincon","Rio.Grande","Sabana.Grande","Salinas","San.German","San.Juan","San.Lorenzo",
-                      "San.Sebastian","Santa.Isabel","Toa.Alta","Toa.Baja","Trujillo.Alto","Utuado","Vega.Alta","Vega.Baja","Vieques","Villalba","Yabucoa","Yauco", "Total")
+                      "San.Sebastian","Santa.Isabel","Toa.Alta","Toa.Baja","Trujillo.Alto","Utuado","Vega.Alta","Vega.Baja","Vieques","Villalba","Yabucoa","Yauco")
 
 colnames(d.ic)<-c("Fecha","Hora","Numero_delito","Delito","X","Y","loca","Area")
 
@@ -94,7 +92,7 @@ d.region <- data.frame(San.Juan=san.juan.2015,Mayaguez=mayaguez.2015,
 d.region #Imprime la base de datos creada
 
 #Buscamos la incidencia de asesinato en Puerto rico
-ic.pr.2015 <- sum(d.2015$Freq)/demo2015$Total*100000#calcula la tasa de Puerto Rico para el año 2015
+ic.pr.2015 <- sum(d.2015$Freq)/sum(demo2015)*100000#calcula la tasa de Puerto Rico para el año 2015
 ic.pr.2015 #Imprime la tasa de incidensia
 
 #Creado por: Angel Velazquez en Agosto 31, 2016
