@@ -28,7 +28,7 @@ colnames(d.demo) <- c('Year',"Adjuntas","Aguada","Aguadilla","Aguas.Buenas","Aib
                       "Florida", "Guanica","Guayama","Guayanilla","Guaynabo","Gurabo","Hatillo","Hormigueros","Humacao","Isabela","Jayuya","Juana.Diaz","Juncos",
                       "Lajas","Lares","Las.Marias","Las.Piedras","Loiza","Luquillo","Manati","Maricao","Maunabo","Mayaguez","Moca","Morovis","Naguabo","Naranjito",
                       "Orocovis","patillas","Penuelas","Ponce","Quebradillas","Rincon","Rio.Grande","Sabana.Grande","Salinas","San.German","San.Juan","San.Lorenzo",
-                      "San.Sebastian","Santa.Isabel","Toa.Alta","Toa.Baja","Trujillo.Alto","Utuado","Vega.Alta","Vega.Baja","Vieques","Villalba","Yabucoa","Yauco")
+                      "San.Sebastian","Santa.Isabel","Toa.Alta","Toa.Baja","Trujillo.Alto","Utuado","Vega.Alta","Vega.Baja","Vieques","Villalba","Yabucoa","Yauco","Total")
 
 colnames(d.ic)<-c("Fecha","Hora","Numero_delito","Delito","X","Y","loca","Area")
 
@@ -92,7 +92,7 @@ d.region <- data.frame(San.Juan=san.juan.2015,Mayaguez=mayaguez.2015,
 d.region #Imprime la base de datos creada
 
 #Buscamos la incidencia de asesinato en Puerto rico
-ic.pr.2015 <- sum(d.2015$Freq)/sum(demo2015)*100000#calcula la tasa de Puerto Rico para el año 2015
+ic.pr.2015 <- sum(d.2015$Freq)/demo2015$Total*100000#calcula la tasa de Puerto Rico para el año 2015
 ic.pr.2015 #Imprime la tasa de incidensia
 
 #Creado por: Angel Velazquez en Agosto 31, 2016
