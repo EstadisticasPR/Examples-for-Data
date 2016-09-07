@@ -16,11 +16,6 @@ url.demografia="https://www.indicadores.pr/api/views/5pce-675z/rows.csv" #Direcc
 d.ic= fread(url.crimen) #Carga la base de datos de incidencia criminal al programa R.
 d.demo= fread(url.demografia) #Carga la base de datos demográfica al programa R.
 
-#Base de datos online
-url.crimen="https://www.indicadores.pr/Demographics/Estimados-anuales-poblacionales-por-municipio-y-Pu/8ey7-awsw"
-d.demo= read.socrata(url.crimen)
-
-
 #Con la función "colnames" cambiamos el nombre de cada variable en los datos de población que acabamos de cargar.
 #Este paso es importante, ya que algunos "characters" no suben correctamente.
 colnames(d.demo) <- c('Year',"Adjuntas","Aguada","Aguadilla","Aguas.Buenas","Aibonito","Anasco","Arecibo","Arroyo","Barceloneta","Barranquitas","Bayamon","Cabo.Rojo",
