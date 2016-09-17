@@ -10,12 +10,12 @@
 
 #Primero preparamos las herramientas necesarias para trabajar en el ejemplo.
 install.packages("data.table")#Instala todos los componentes que necesitamos para trabajar en el ejemplo.
-library(data.table)# Carga la librería de Socrata al programa R.
-d.ic=fread("https://data.pr.gov/api/views/pzaz-tkx9/rows.csv") #Carga la base de datos de incidencia criminal al programa R.
-d.demo=fread("https://www.indicadores.pr/api/views/5pce-675z/rows.csv") #Carga la base de datos demográfica al programa R.
+library(data.table)# carga la libreria de Socrata al programa R
+d.ic=fread("https://data.pr.gov/api/views/pzaz-tkx9/rows.csv") #Carga la base de datos de insidencia criminal al programa R.
+d.demo=fread("https://www.indicadores.pr/api/views/5pce-675z/rows.csv") #Carga la base de datos de demografía al programa R.
 
 #Con la función "colnames" cambiamos el nombre de cada variable en la base de datos que acabamos de cargar.
-#Este paso es importante, ya que algunos "characters" no cargan correctamente.
+#Este paso es importante, ya que algunos "characters" no suben correctamente.
 colnames(d.demo) <- c('Year',"Adjuntas","Aguada","Aguadilla","Aguas.Buenas","Aibonito","Anasco","Arecibo","Arroyo","Barceloneta","Barranquitas","Bayamon","Cabo.Rojo",
                       "Caguas","Camuy","Canovanas","Carolina","Catano","Cayey","Ceiba","Ciales","Cidra","Coamo","Comerio","Corozal","Culebra","Dorado","Fajardo",
                       "Florida", "Guanica","Guayama","Guayanilla","Guaynabo","Gurabo","Hatillo","Hormigueros","Humacao","Isabela","Jayuya","Juana.Diaz","Juncos",
@@ -25,65 +25,65 @@ colnames(d.demo) <- c('Year',"Adjuntas","Aguada","Aguadilla","Aguas.Buenas","Aib
 
 colnames(d.ic)<-c("Fecha","Hora","Numero_delito","Delito","X","Y","loca","Area")
 
-df.by.year= split(d.demo,f=d.demo$Year)#Divide la base de datos demográfica en diferentes listas por añó.
+df.by.year= split(d.demo,f=d.demo$Year)#Crea una serie de listas el cual está dividide los datos por año.
 
-#Dividimos la población por año. (2012,2013,2014,2015)
-demo2012 <- as.data.frame(df.by.year$`2012`)
-demo2013 <- as.data.frame(df.by.year$`2013`)
-demo2014 <- as.data.frame(df.by.year$`2014`)
-demo2015 <- as.data.frame(df.by.year$`2015`)
-
-#Para efecto de este ejemplo vamos a calcular la tasa de asesinatos para 2015.
-#Para obtener la tasa de incidencia de otros delitos sustituya la palabra "Asesinato" por uno de los siguentes:
+#Para efecto de este ejemplo vamos a calcular las tasas de asesinatos para 2015.
+#Para obtener las tasas de incidencia de otros delitos sustituya la palabra "Asesinato" por uno de los siguentes:
+x="Asesinato"
 
 #         "Apropiacion ilegal"     "Escalamiento"
 #         "Agresion Agravada"      "Robo"
 #         "Vehiculo Hurtado"       "Violacion"
 #         "Incendio Malicioso"     "Otros"
 
+#Para obtener los resultados para un año diferente, sustituya "2015" por 2012, 2013 ó 2014 en las 
+#siguientes dos lineas.
+y=2015
+demo.y <- as.data.frame(df.by.year$`2015`)
+
 #Le decimos al programa que la primera fila son fechas (solo para que detecte que es una fecha) con respecto al delito que deseamos analizar.
-d.delito <- as.Date(d.ic$Fecha[agrep(pattern = "Asesinato",d.ic$Delito,ignore.case = TRUE)])
+d.delito <- as.Date(d.ic$Fecha[agrep(pattern = x ,d.ic$Delito,ignore.case = TRUE)])
 
 #Convertimos las fechas a un formato que solo contenga años.
 y.delito <- format(d.delito,format= "%Y")
 
-#Extraemos los delitos y las áreas policiacas para crear un subconjunto más pequeño.
-casos <- d.ic$Delito[agrep(pattern = "Asesinato",d.ic$Delito,ignore.case=TRUE)]
-areas <- d.ic$Area[agrep(pattern = "Asesinato", d.ic$Delito, ignore.case = TRUE)]
+#Extraemos los delitos y las áreas policiacas para crear un subconjunto mas pequeño.
+casos <- d.ic$Delito[agrep(pattern = x ,d.ic$Delito,ignore.case=TRUE)]
+areas <- d.ic$Area[agrep(pattern = x , d.ic$Delito, ignore.case = TRUE)]
 
 #Creamos un subconjunto con la data que queremos analizar.
 ic.delito <-data.frame(Fecha=d.delito, Year=y.delito, Area.Policiaca=areas, Delito=casos)
 
 #Dividimos los asesinatos por año.
-delito.2015 <- subset(ic.delito, Year==2015)
+delito.y <- subset(ic.delito, Year==y)
 
-#Calculamos la incidencia de asesinatos por cada área para el 2015.
-d.2015 <- table(delito.2015$Area.Policiaca)#Crea una tabla sobre los asesinatos en 2015.
-d.2015 <- as.data.frame(d.2015)#Convierte la tabla en una base de datos sobre asesinatos en 2015.
+
+#Calculamos la incidencia de asesinatos por cada área.
+dy <- table(delito.y$Area.Policiaca)#Crea una tabla sobre los asesinatos en 2015
+dy <- as.data.frame(dy)#convierte la tabla en una base de datos sobre asesinatos en 2015
+
 
 #Ya con los datos divididos y organizados, calculamos la tasa de asesinatos o del crimen que desea estudiar.
 #la formula genérica para es mismo es: 
 #(región)(año)=d.(año)$Freq[agrep(pattern = "(región)",d.2015$Var1)]/(sumatoria de los pueblos que conponen la región)*100000
 
-san.juan.2015 <- d.2015$Freq[agrep(pattern = "San Juan",d.2015$Var1)]/demo2015$San.Juan*100000
+san.juan.y <- dy$Freq[agrep(pattern = "San Juan",dy$Var1)]/demo.y$San.Juan*100000
 
-mayaguez.2015 <- d.2015$Freq[agrep(pattern = "Mayaguez",d.2015$Var1)]/(demo2015$Mayaguez+demo2015$Hormigueros+demo2015$Anasco+demo2015$Cabo.Rojo+demo2015$Las.Marias+demo2015$Lajas+
-                                                                             demo2015$Maricao+demo2015$San.German+demo2015$Sabana.Grande)*100000
+mayaguez.y <- dy$Freq[agrep(pattern = "Mayaguez",dy$Var1)]/(demo.y$Mayaguez+demo.y$Hormigueros+demo.y$Anasco+demo.y$Cabo.Rojo+demo.y$Las.Marias+demo.y$Lajas+
+                                                                             demo.y$Maricao+demo.y$San.German+demo.y$Sabana.Grande)*100000
 
-fajardo.2015 <- d.2015$Freq[agrep(pattern = "Fajardo",d.2015$Var1)]/(demo2015$Fajardo+demo2015$Luquillo+demo2015$Ceiba+demo2015$Rio.Grande+demo2015$Vieques+demo2015$Culebra)*100000
+fajardo.y <- dy$Freq[agrep(pattern = "Fajardo",dy$Var1)]/(demo.y$Fajardo+demo.y$Luquillo+demo.y$Ceiba+demo.y$Rio.Grande+demo.y$Vieques+demo.y$Culebra)*100000
 
-ponce.2015 <- d.2015$Freq[agrep(pattern = "Ponce",d.2015$Var1)]/(demo2015$Yauco+demo2015$Juana.Diaz+demo2015$Santa.Isabel+demo2015$Villalba+demo2015$Penuelas+demo2015$Guayanilla+
-                                                                           demo2015$Guanica+demo2015$Ponce)*100000
+ponce.y <- dy$Freq[agrep(pattern = "Ponce",dy$Var1)]/(demo.y$Yauco+demo.y$Juana.Diaz+demo.y$Santa.Isabel+demo.y$Villalba+demo.y$Penuelas+demo.y$Guayanilla+
+                                                                           demo.y$Guanica+demo.y$Ponce)*100000
 
-#Colocamos toda la información en un data frame para facilitar el análisis.
-d.region <- data.frame(San.Juan=san.juan.2015,Mayaguez=mayaguez.2015,Fajardo=fajardo.2015,Ponce=ponce.2015)
+#colocamos toda la información en un data frame para facilitar el análisis.
+d.region <- data.frame(San.Juan=san.juan.y,Mayaguez=mayaguez.y,Fajardo=fajardo.y,Ponce=ponce.y)
 d.region #Imprime la base de datos creada
 
-#Buscamos la tasa de asesinato en Puerto rico.
-ic.pr.2015 <- sum(d.2015$Freq)/demo2015$Total*100000 #Calcula la tasa de Puerto Rico para el año 2015
-ic.pr.2015 #Imprime la tasa de incidensia.
-
-#NOTA: Para obtener los resultados para un año diferente, sustituya "2015" por: 2012, 2013 ó 2014.
+#Buscamos la incidencia de asesinato en Puerto rico
+ic.pr.y <- sum(dy$Freq)/demo.y$Total*100000#calcula la tasa de Puerto Rico para el año 2015
+ic.pr.y#Imprime la tasa de incidensia.
 
 
 #Creado por: Angel Velazquez en Agosto 31, 2016
