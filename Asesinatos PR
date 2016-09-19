@@ -11,7 +11,7 @@
 #Primero preparamos las herramientas necesarias para trabajar en el ejemplo.
 install.packages("data.table")#Instala todos los componentes que necesitamos para trabajar en el ejemplo.
 library(data.table)# carga la libreria de Socrata al programa R
-d.ic=fread("https://data.pr.gov/api/views/pzaz-tkx9/rows.csv") #Carga la base de datos de insidencia criminal al programa R.
+d.ic=fread("https://data.pr.gov/api/views/pzaz-tkx9/rows.csv") #Carga la base de datos de incidencia criminal al programa R.
 d.demo=fread("https://www.indicadores.pr/api/views/5pce-675z/rows.csv") #Carga la base de datos de demografía al programa R.
 
 #Con la función "colnames" cambiamos el nombre de cada variable en la base de datos que acabamos de cargar.
@@ -70,12 +70,12 @@ dy <- as.data.frame(dy)#convierte la tabla en una base de datos sobre asesinatos
 san.juan.y <- dy$Freq[agrep(pattern = "San Juan",dy$Var1)]/demo.y$San.Juan*100000
 
 mayaguez.y <- dy$Freq[agrep(pattern = "Mayaguez",dy$Var1)]/(demo.y$Mayaguez+demo.y$Hormigueros+demo.y$Anasco+demo.y$Cabo.Rojo+demo.y$Las.Marias+demo.y$Lajas+
-                                                                             demo.y$Maricao+demo.y$San.German+demo.y$Sabana.Grande)*100000
+                                                              demo.y$Maricao+demo.y$San.German+demo.y$Sabana.Grande)*100000
 
 fajardo.y <- dy$Freq[agrep(pattern = "Fajardo",dy$Var1)]/(demo.y$Fajardo+demo.y$Luquillo+demo.y$Ceiba+demo.y$Rio.Grande+demo.y$Vieques+demo.y$Culebra)*100000
 
 ponce.y <- dy$Freq[agrep(pattern = "Ponce",dy$Var1)]/(demo.y$Yauco+demo.y$Juana.Diaz+demo.y$Santa.Isabel+demo.y$Villalba+demo.y$Penuelas+demo.y$Guayanilla+
-                                                                           demo.y$Guanica+demo.y$Ponce)*100000
+                                                        demo.y$Guanica+demo.y$Ponce)*100000
 
 #colocamos toda la información en un data frame para facilitar el análisis.
 d.region <- data.frame(San.Juan=san.juan.y,Mayaguez=mayaguez.y,Fajardo=fajardo.y,Ponce=ponce.y)
