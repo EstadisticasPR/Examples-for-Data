@@ -83,3 +83,5 @@ d.region # Print the created data base
 # Search for the crime incidence in Puerto Rico
 ic.pr.y <- sum(dy$Freq)/demo.y$Total*100000 # Calculate the rate of Puerto Rico for the year 2015
 ic.pr.y # Print the incidence rate.
+
+#Created by: Angel Velazquez 
