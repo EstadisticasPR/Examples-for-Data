@@ -2,15 +2,20 @@
 # regions of Puerto Rico. R o R Studio for Windows can be downloaded in
 # https://cran.r-project.org/bin/windows/base/ or https://www.rstudio.com/products/rstudio/download3/. 
 # Note that in addition to the criminality data we need the data for the police department 
-# population of Puerto Rico per region during those years for us to calculate the homicide 
-# statistics in Puerto Rico for 2015.
+# population of Puerto Rico per region during those years for us to calculate the homicide statistics in Puerto Rico for 2015.
+# This code runs in R 3.3.1 since Auguts 31, 2016.In case of an error, check your version of the data and R since changes may have occurred.
 
 # NOTE: Every line that begins with “#” the program detects it as a comment.
 
 # First, prepare the necessary tools to work on the example.
-install.packages("data.table") # Install all of the components that we need to work on the example.
-library(data.table) # Upload the library “data.table” to the R program
-d.ic=fread("https://data.pr.gov/api/views/pzaz-tkx9/rows.csv") # Upload the crime incidences to the R program. 
+# Create a function to install all packages that you need in the application. Function provided in
+# https://gist.github.com/stevenworthington/3178163
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
 d.demo=fread("https://www.indicadores.pr/api/views/5pce-675z/rows.csv") # Upload the demographic data base to the R program.
 
 # With the “colnames” function we changed the name of each variable in the data base that we just 
@@ -84,4 +89,4 @@ d.region # Print the created data base
 ic.pr.y <- sum(dy$Freq)/demo.y$Total*100000 # Calculate the rate of Puerto Rico for the year 2015
 ic.pr.y # Print the incidence rate.
 
-#Created by: Angel Velazquez 
+# Created by: Angel Velazquez 
