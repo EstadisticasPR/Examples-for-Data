@@ -2,16 +2,27 @@
 # Utilizamos el programa gratuito de análisis estadístico llamado R para obtener
 # tasas de asesinatos en alguna región en Puerto Rico. R o RStudio para Windows se puden bajar en 
 # https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
-# Noten que en adición a los datos de criminalidad necesitamos
-# la población de las regiones policiacas de Puerto Rico durante los diferentes años
-# Para efectos de este ejemplo se calculará los asesinatos en Puerto Rico para 2015.
+# Noten que en adición a los datos de criminalidad necesitamos la población de las regiones policiacas de Puerto Rico durante 
+#los diferentes años. Para efectos de este ejemplo se calculará los asesinatos en Puerto Rico para 2015.
+#Este código corre en R 3.3.1 desde agosto 31, 2016. En caso de error, verifique su versión de la data y de R ya que cambios pudieron haber occurido.
 
 #NOTA: Cada linea que empieza con "#" el programa lo detecta como un comentario.
 
 #Primero preparamos las herramientas necesarias para trabajar en el ejemplo.
-install.packages("data.table") #Instala todos los componentes que necesitamos para trabajar en el ejemplo.
-library(data.table) #Carga la librería de "data.table" al programa R.
-d.ic=fread("https://data.pr.gov/api/views/pzaz-tkx9/rows.csv") #Carga la base de datos de incidencia criminal al programa R.
+
+# Se creará una función para instalar paquetes necesarios para esta aplicación. Función provista en 
+# https://gist.github.com/stevenworthington/3178163
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# Ahora verificamos si el paquete data.table está instalado en su máquina. Sino, ipak lo instala y hace disponible
+packages <- "data.table" # este paquete se usa para cargar la data de data.pr.gov al programa R
+ipak(packages) #instala o activa paquete necesario
+
 d.demo=fread("https://www.indicadores.pr/api/views/5pce-675z/rows.csv") #Carga la base de datos demográfica al programa R.
 
 #Con la función "colnames" cambiamos el nombre de cada variable en la base de datos que acabamos de cargar.
