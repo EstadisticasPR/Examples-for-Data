@@ -17,6 +17,7 @@ ipak <- function(pkg){
   sapply(pkg, require, character.only = TRUE)
 }
 d.demo=fread("https://www.indicadores.pr/api/views/5pce-675z/rows.csv") # Upload the demographic data base to the R program.
+d.ic=fread("https://data.pr.gov/api/views/pzaz-tkx9/rows.csv") #Carga la base de datos de incidencia criminal al programa R.
 
 # With the “colnames” function we changed the name of each variable in the data base that we just 
 # uploaded. This is a very important step, since some of the characters do not upload as they should.
