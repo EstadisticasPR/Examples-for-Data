@@ -24,6 +24,7 @@ packages <- "data.table" # este paquete se usa para cargar la data de data.pr.go
 ipak(packages) #instala o activa paquete necesario
 
 d.demo=fread("https://www.indicadores.pr/api/views/5pce-675z/rows.csv") #Carga la base de datos demográfica al programa R.
+d.ic=fread("https://data.pr.gov/api/views/pzaz-tkx9/rows.csv") #Carga la base de datos de incidencia criminal al programa R.
 
 #Con la función "colnames" cambiamos el nombre de cada variable en la base de datos que acabamos de cargar.
 #Este paso es importante, ya que algunos "characters" no suben correctamente.
