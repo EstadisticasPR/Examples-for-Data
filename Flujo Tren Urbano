@@ -1,0 +1,333 @@
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# Ahora verificamos si el paquete data.table está instalado en su máquina. Sino, ipak lo instala y hace disponible
+packages <- c("shiny","leaflet","RSocrata") # este paquete se usa para cargar la data de data.pr.gov al programa R
+ipak(packages) #instala o activa paquete necesario
+
+
+ui = fluidPage(
+     navbarPage("Year",
+      tabPanel("2010",
+        sidebarLayout(position = "right", 
+          sidebarPanel(h3("Seleccione"),column(4,
+              br(),
+              br(),
+              checkboxInput("entradas.2010", "Entradas", FALSE),
+              checkboxInput("salidas.2010", "Salidas", FALSE),
+              checkboxGroupInput("month10", "", 
+                                 choices=c("January" = "1", "February" = "2", "March" = "3", "April" = "4",
+                                           "May"= "5", "June" = "6", "July" = "7","August" = "8", "September" = "9",
+                                           "Octover" = "10", "November" = "11", "December" = "12"),selected = "1"))
+            ),
+          mainPanel(
+            leafletOutput("mapa2010", width = "100%", height = "400px"),
+            dataTableOutput("table10")
+            
+          )
+        )
+    ),
+      tabPanel("2011",
+        sidebarLayout(position = "right",
+          sidebarPanel(h3("Seleccione"),column(4,
+             br(),
+             br(),
+             checkboxInput("entradas.2011", "Entradas", FALSE),
+             checkboxInput("salidas.2011", "Salidas", FALSE),
+             checkboxGroupInput("month11", 
+               label = h3(""), 
+               choices = list("January" = "01", "February" = "02", "March" = "03", "April" = "04",
+                              "May"= "05", "June" = "06", "July" = "07","August" = "08", "September" = "09",
+                              "Octover" = "10", "November" = "11", "December" = "12"),selected = "01"))
+         ),
+         mainPanel(
+          leafletOutput("mapa2011", width = "100%", height = "400px")
+         )
+        )
+      ),
+    tabPanel("2012",
+    sidebarLayout(position = "right",
+      sidebarPanel(h3("Seleccione"),column(4,
+          br(),
+          br(),
+          checkboxInput("entradas.2012", "Entradas", FALSE),
+          checkboxInput("salidas.2012", "Salidas", FALSE),
+          checkboxGroupInput("month12", 
+                      label = h3(""), 
+                      choices = list("January" = "01", "February" = "02", "March" = "03", "April" = "04",
+                                     "May"= "05", "June" = "06", "July" = "07","August" = "08", "September" = "09",
+                                     "Octover" = "10", "November" = "11", "December" = "12"),selected = "01"))
+              ),
+        mainPanel(
+            leafletOutput("mapa2012", width = "100%", height = "400px")
+        )
+     )
+    ),
+    tabPanel("2013",
+      sidebarLayout(position = "right",
+        sidebarPanel(h3("Seleccione"),column(4,
+            br(),
+            br(),
+            checkboxInput("entradas.2013", "Entradas", FALSE),
+            checkboxInput("salidas.2013", "Salidas", FALSE),
+            checkboxGroupInput("month13", 
+                        label = h3(""), 
+                        choices = list("January" = "01", "February" = "02", "March" = "03", "April" = "04",
+                                       "May"= "05", "June" = "06", "July" = "07","August" = "08", "September" = "09",
+                                        "Octover" = "10", "November" = "11", "December" = "12"),selected = "01"))
+                ),
+          mainPanel(
+            leafletOutput("mapa2013", width = "100%", height = "400px")
+          )
+      )
+    ),
+    tabPanel("2014",
+        sidebarLayout(position = "right",
+              sidebarPanel(h3("Seleccione"),column(4,
+                  br(),
+                  br(),
+                  checkboxInput("entradas.2014", "Entradas", FALSE),
+                  checkboxInput("salidas.2014", "Salidas", FALSE),
+                  checkboxGroupInput("month14", 
+                            label = h3(""), 
+                            choices = list("January" = "01", "February" = "02", "March" = "03", "April" = "04",
+                                           "May"= "05", "June" = "06", "July" = "07","August" = "08", "September" = "09",
+                                            "Octover" = "10", "November" = "11", "December" = "12"),selected = "01"))
+            ),
+         mainPanel(
+              leafletOutput("mapa2014", width = "100%", height = "400px")
+        )
+      )
+    ),
+    tabPanel("2015",
+        sidebarLayout(position = "right",
+            sidebarPanel(h3("Seleccione"),column(4,
+                br(),
+                br(),
+                checkboxInput("entradas.2015", "Entradas", FALSE),
+                checkboxInput("salidas.2015", "Salidas", FALSE),
+                checkboxGroupInput("month15", 
+                            label = h3(""), 
+                            choices = list("January" = "01", "February" = "02", "March" = "03", "April" = "04",
+                                           "May"= "05", "June" = "06", "July" = "07","August" = "08", "September" = "09",
+                                            "Octover" = "10", "November" = "11", "December" = "12"),selected = "01"))
+            ),
+        mainPanel(
+          leafletOutput("mapa2015", width = "100%", height = "400px")
+        )
+      )
+    )
+  )
+)
+
+d.tren <- read.socrata("https://www.indicadores.pr/dataset/N-mero-de-pasajeros-del-Tren-Urbano-Patrocinio-Tre/yvww-vrxd")
+names(d.tren)[1] <- "Fecha"
+
+nyr <- as.character(d.tren$Fecha, format = "%Y")
+nm <-as.character(d.tren$Fecha,format= "%m")
+d.tren <- cbind(nyr,nm,d.tren[2:35])
+
+entradas<- split(d.tren[3:18],d.tren$nyr)
+salidas<- split(d.tren[20:35],d.tren$nyr)
+
+ent2010=as.data.frame(entradas$`2010`)
+sal2010=as.data.frame(salidas$`2010`)
+ent2011=as.data.frame(entradas$`2011`)
+sal2011=as.data.frame(salidas$`2011`)
+ent2012=as.data.frame(entradas$`2012`)
+sal2012=as.data.frame(salidas$`2012`)
+ent2013=as.data.frame(entradas$`2013`)
+sal2013=as.data.frame(salidas$`2013`)
+ent2014=as.data.frame(entradas$`2014`)
+sal2014=as.data.frame(salidas$`2014`)
+ent2015=as.data.frame(entradas$`2015`)
+sal2015=as.data.frame(salidas$`2015`)
+ent2016=as.data.frame(entradas$`2016`)
+sal2016=as.data.frame(salidas$`2016`)
+
+entradas2010=data.frame(t(ent2010))
+salidas2010=data.frame(t(sal2010))
+entradas2011=data.frame(t(ent2011))
+salidas2011=data.frame(t(sal2011))
+entradas2012=data.frame(t(ent2012))
+salidas2012=data.frame(t(sal2012))
+entradas2013=data.frame(t(ent2013))
+salidas2013=data.frame(t(sal2013))
+entradas2014=data.frame(t(ent2014))
+salidas2014=data.frame(t(sal2014))
+entradas2015=data.frame(t(ent2015))
+salidas2015=data.frame(t(sal2015))
+
+estacion<-c("Bayamon -","Deportivo -","Jardines -","Torrimar -","Martinez Nadal -","Las Lomas -",
+            "San Francisco -","Centro Medico -","Cupey -","Rio Piedras -","Universidad -","Pinero -",
+            "Domenech -","Rossevelt -","Hato Rey -","Sagrado Corazon -")
+
+lat <- c(18.400641,18.394287,18.394109,18.391491,18.39109,18.390786,18.390806,18.39152,
+         18.390395,18.398968,18.405085,18.41096,18.415581,18.423306,18.429448,18.43619)
+lng <- c(-66.153781,-66.149171,-66.127984,-66.117701,-66.101877,-66.094314,-66.082522,-66.074914
+         ,-66.063386,-66.05236,-66.051823,-66.055407,-66.056422,-66.058934,-66.060229,-66.060367)
+
+est<-data.frame(estacion,lat,lng)
+
+server <- function(input, output) {   
+  output$mapa2010 <- renderLeaflet({
+    leaflet(est) %>% addTiles() %>%
+      fitBounds(~min(lng), ~min(lat), ~max(lng), ~max(lat))
+  })
+  
+  observe({
+    values <- vector(mode = "integer", length = 16)
+    
+      if(length(input$month10) == 1 & input$entradas.2010) {
+        for(i in 1:input$month10) {
+          values <- entradas2010[,i]
+          }
+      }
+    if(length(input$month10) == 1 & input$salidas.2010) {
+      for(i in 1:input$month10) {
+        values <- salidas2010[,i]
+      }
+    }
+    
+    leafletProxy('mapa2010', data = est ) %>% 
+      clearShapes() %>%
+      addCircles(lng = ~lng, lat = ~lat, weight = 1,
+                 radius = ~sqrt(values)*3, popup = ~paste(estacion, values))
+    
+  })
+
+  output$mapa2011 <- renderLeaflet({
+    leaflet(est) %>% addTiles() %>%
+      fitBounds(~min(lng), ~min(lat), ~max(lng), ~max(lat))
+  })
+  
+  observe({
+    values <- vector(mode = "integer", length = 16)
+    
+    if(length(input$month11) == 1 & input$entradas.2011) {
+      for(i in 1:input$month11) {
+        values <- entradas2011[,i]
+      }
+    }
+    if(length(input$month11) == 1 & input$salidas.2011) {
+      for(i in 1:input$month11) {
+        values <- salidas2011[,i]
+      }
+    }
+    
+    leafletProxy('mapa2011', data = est ) %>% 
+      clearShapes() %>%
+      addCircles(lng = ~lng, lat = ~lat, weight = 1,
+                 radius = ~sqrt(values)*3, popup = ~paste(estacion, values))
+  })
+  
+  output$mapa2012 <- renderLeaflet({
+    leaflet(est) %>% addTiles() %>%
+      fitBounds(~min(lng), ~min(lat), ~max(lng), ~max(lat))
+  })
+  
+  observe({
+    values <- vector(mode = "integer", length = 16)
+    
+    if(length(input$month12) == 1 & input$entradas.2012) {
+      for(i in 1:input$month12) {
+        values <- entradas2012[,i]
+      }
+    }
+    if(length(input$month12) == 1 & input$salidas.2012) {
+      for(i in 1:input$month12) {
+        values <- salidas2012[,i]
+      }
+    }
+    
+    leafletProxy('mapa2012', data = est ) %>% 
+      clearShapes() %>%
+      addCircles(lng = ~lng, lat = ~lat, weight = 1,
+                 radius = ~sqrt(values)*3, popup = ~paste(estacion, values))
+  })
+  output$mapa2013 <- renderLeaflet({
+    leaflet(est) %>% addTiles() %>%
+      fitBounds(~min(lng), ~min(lat), ~max(lng), ~max(lat))
+  })
+  
+  observe({
+    values <- vector(mode = "integer", length = 16)
+    
+    if(length(input$month13) == 1 & input$entradas.2013) {
+      for(i in 1:input$month13) {
+        values <- entradas2013[,i]
+      }
+    }
+    if(length(input$month13) == 1 & input$salidas.2013) {
+      for(i in 1:input$month13) {
+        values <- salidas2013[,i]
+      }
+    }
+    
+    leafletProxy('mapa2013', data = est ) %>% 
+      clearShapes() %>%
+      addCircles(lng = ~lng, lat = ~lat, weight = 1,
+                 radius = ~sqrt(values)*3, popup = ~paste(estacion, values))
+  })
+  output$mapa2014 <- renderLeaflet({
+    map <-leaflet(data.frame(estacion,lat,lng)) %>% addTiles() %>%
+      fitBounds(~min(lng), ~min(lat), ~max(lng), ~max(lat))
+  })
+  
+  observe({
+    values <- vector(mode = "integer", length = 16)
+    
+    if(length(input$month14) == 1 & input$entradas.2014) {
+      for(i in 1:input$month14) {
+        values <- entradas2014[,i]
+      }
+    }
+    if(length(input$month14) == 1 & input$salidas.2014) {
+      for(i in 1:input$month14) {
+        values <- salidas2014[,i]
+      }
+    }
+    
+    leafletProxy('mapa2014', data = est ) %>% 
+      clearShapes() %>%
+      addCircles(lng = ~lng, lat = ~lat, weight = 1,
+                 radius = ~sqrt(values)*3, popup = ~paste(estacion, values))
+    
+  })
+  output$mapa2015 <- renderLeaflet({
+    map <-leaflet(data.frame(estacion,lat,lng)) %>% addTiles() %>%
+      fitBounds(~min(lng), ~min(lat), ~max(lng), ~max(lat))
+  })
+  
+  observe({
+    values <- vector(mode = "integer", length = 16)
+    
+    if(length(input$month15) == 1 & input$entradas.2015) {
+      for(i in 1:input$month15) {
+        values <- entradas2015[,i]
+      }
+    }
+    if(length(input$month15) == 1 & input$salidas.2015) {
+      for(i in 1:input$month15) {
+        values <- salidas2015[,i]
+      }
+    }
+    
+    leafletProxy('mapa2015', data = est ) %>% 
+      clearShapes() %>%
+      addCircles(lng = ~lng, lat = ~lat, weight = 1,
+                 radius = ~sqrt(values)*3, popup = ~paste(estacion, values))
+    
+  })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+
+
+  
+  
