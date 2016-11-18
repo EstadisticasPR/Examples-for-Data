@@ -1,10 +1,9 @@
 ##############################################################################
 # Utilizamos el programa gratuito de análisis estadístico llamado R para comparar
-# IGS promedio de varias escuelas superiores en Puerto Rico. R o RStudio para Windows se puden bajar en 
+# el porcentaje de impedimentos en Puerto Rico. R o RStudio para Windows se puden bajar en 
 # https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
-# Este código corre en R 3.3.1 desde octubre 28, 2016. En caso de error, verifique su versión de la data y de R ya 
+# Este código corre en R 3.3.1 desde Noviembre 17, 2016. En caso de error, verifique su versión de la data y de R ya 
 #que cambios pudieron haber occurido.
-# Creado por Roberto Rivera, roberto.rivera30@upr.edu
 
 #NOTA: Cada linea que empieza con "#" el programa lo detecta como un comentario.
 
@@ -31,9 +30,9 @@ percent <- round(totals/sum(totals)*100, digits = 2)
 
 #Usamos el comando barplot para hacer la gráfica con los porcentajes
 #le ponemos los límites del eje y (0,50), con la opción "las" rotamos los nombres de 
-#los labels verticalmente, con "names.arg" le pasamos las abreviaciones de los impedimentos,
-#con "raibow" le damos color a las barras,en "main" le pasamos el nombres de la 
-#gráfica y con "text" le decimos que ponga los porcentajes en cima de cada barra.
+#los labels verticalmente, con "names.arg" se abrevia cada nombre de cada impedimento,
+#con "raibow" damos color a las barras, con "main" le ponemos título a la gráfica 
+#y con "text" le decimos que ponga los porcentajes en cima de cada barra.
 bp <- barplot(percent, ylim = c(0,50), las = 2,
               names.arg = abr, cex.names = .75,
               col = rainbow(length(percent)),
@@ -44,24 +43,23 @@ text(bp, percent+2, percent, cex=.75)
 #Abreviamos los impdemintos para mejor visualización
 abr <- c("AUT", "DIS_EMO", "IMP_MUL", "OTROS", "HAB&LENG", "APREN",  "DEF_INTL")
 
-#Sacamos el porcentaje de cada impedimento dividiendolo 
-#por la suma de los totales y multiplicandolo por 100
+#Sacamos el porcentaje de cada impedimento dividiendolo por la suma de los totales y multiplicandolo por 100
 percent <- totals/sum(totals)*100
 
-#Guardamos los indices que contienen menor de 1% y los que tienen mayor de 1%
+#Clasificamos los índices entre mayor de un porciento y menor a un porciento.
 ind1 <- which(percent <= 1)
 ind2 <- which(percent > 1)
 
-#Sumamos los que sean menor 1% con sum(percent[ind1])) a los otros. Luego tomamos los de mayor 
-#de 1% redondeamos con el comando round hasta dos puntos decimales.
+# Sumamos los que sean menor 1% con sum(percent[ind1])) a los otros. Luego tomamos los de mayor 
+# de 1% redondeamos con el comando round hasta dos puntos decimales.
 percent[6] <- percent[6] + sum(percent[ind1])
 percent <- round(percent[ind2], digits = 2)
 
 #Usamos el comando barplot para hacer la gráfica con los porcentajes
 #le ponemos los límites del eje y (0,50), con la opción "las" rotamos los nombres de 
-#los labels verticalmente, con "names.arg" le pasamos las abreviaciones de los impedimentos,
-#con "raibow" le damos color a las barras,en "main" le pasamos el nombres de la 
-#gráfica y con "text" le decimos que ponga los porcentajes en cima de cada barra.
+#los labels verticalmente, con "names.arg" se abrevia cada nombre de cada impedimento,
+#con "raibow" damos color a las barras, con "main" le ponemos título a la gráfica 
+#y con "text" le decimos que ponga los porcentajes en cima de cada barra.
 bp <- barplot(percent, ylim = c(0,50), las = 2,
               names.arg = abr, cex.names = .75,
               col = rainbow(length(percent)),
