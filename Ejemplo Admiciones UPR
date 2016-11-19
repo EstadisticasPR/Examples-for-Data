@@ -1,0 +1,96 @@
+##############################################################################
+# Utilizamos el programa gratuito de análisis estadístico llamado R para comparar
+# IGS promedio de varias escuelas superiores en Puerto Rico. R o RStudio para Windows se pueden bajar en 
+# https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
+# Este código corre en R 3.3.1 desde octubre 28, 2016. En caso de error, verifique su versión de la data y de R ya que cambios pudieron haber occurido.
+# Creado por Roberto Rivera, roberto.rivera30@upr.edu
+
+#NOTA: Cada linea que empieza con "#" el programa lo detecta como un comentario.
+
+#Primero preparamos las herramientas necesarias para trabajar en el ejemplo.
+
+# Se creará una función para instalar paquetes necesarios para esta aplicación. Función provista en https://gist.github.com/stevenworthington/3178163
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# Ahora verificamos si el paquete data.table está instalado en su máquina. Sino, ipak lo instala y hace disponible
+packages <- "data.table" # este paquete se usa para cargar la data de data.pr.gov al programa R
+ipak(packages) #instala o activa paquete necesario
+
+all_data=fread("https://data.pr.gov/api/views/86kg-xz8a/rows.csv",data.table=FALSE) #Carga la base de datos de admisiones 
+names(all_data)<-make.names(names(all_data)) # hace los nombres de las columnas mas convenientes
+
+
+# GPA is misleading since some schools might be easier than other schools. IGS is better
+summary(all_data$IGS[agrep(pattern="ramey",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)])
+summary(all_data$IGS[agrep(pattern="liceo aguadillano",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)])
+summary(all_data$IGS,na.rm=T)
+summary(all_data$IGS[agrep(pattern="san carlos",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)])
+summary(all_data$IGS[agrep(pattern="carib",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)])
+summary(all_data$IGS[agrep(pattern="benito cerezo",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)])
+summary(all_data$IGS[agrep(pattern="salvador fuentes",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)])
+summary(all_data$IGS[agrep(pattern="juan suarez pelegrina",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)])
+summary(all_data$IGS[agrep(pattern="francisco mendoza",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)])
+
+# The following function retrieves a statistic (such as length or 5 number summary)
+# by school and academic year. It also plots a boxplot of IGS,
+# defaults to liceo aguadillano and 5 number summary
+# arguments:
+#    school=name of school (as complete as possible)
+#    stat= statistic of interest: summary, mean, length, etc.
+#    var=variable of interest: 7 (default) = IGS, 6=GPA (GPA is not standard even within school nd can be misleading, best avoided, or
+#     normalized)
+schoolsummary<-function(school="liceo aguadillano",stat=summary,var=7){
+school_t<-agrep(pattern=school,
+all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)
+school_sub<-all_data[school_t,]
+b.labe<-ifelse(var==7,"IGS","GPA")
+boxplot(school_sub[,var]~school_sub[,1],notch=TRUE,ylab=b.labe,las=2,
+names=c("2009-10","2010-11","2011-12","2012-13","2013-14")) #xlab="School Year"
+stats_n<-tapply(school_sub[,var],school_sub[,1], stat)
+#cat(paste(stat, "for", school))
+return(summary=stats_n)
+}
+
+
+## IGS COMPARISON
+par(mfrow=c(1,2))
+boxplot(all_data$IGS[agrep(pattern="benito cerezo",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)],notch=T,ylab="IGS")
+293+1.57*(323-271.2)/sqrt(length(all_data$IGS[agrep(pattern="benito cerezo",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)]))
+ramey.igs<-all_data$IGS[agrep(pattern="ramey school",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)]
+sc.igs<-all_data$IGS[agrep(pattern="san carlos",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)]
+lic.igs<-all_data$IGS[agrep(pattern="liceo aguadillano",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)]
+carib.igs<-all_data$IGS[agrep(pattern="carib christian",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)]
+benit.pub.igs<-all_data$IGS[agrep(pattern="benito cerezo",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)]
+salv.pub.igs<-all_data$IGS[agrep(pattern="salvador fuentes",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)]
+juan.pub.igs<-all_data$IGS[agrep(pattern="juan suarez pelegrina",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)]
+#fran.pub.igs<-all_data$IGS[agrep(pattern="francisco mendoza",all_data$INSTITUCION.DE.PROCEDENCIA,ignore.case=T)]
+
+vars = rep(c("liceo","ramey", "carib", "sancar","ben.pub","salv.pub","juan.pub"), times = c(length(lic.igs),
+length(ramey.igs),length(carib.igs),length(sc.igs),length(benit.pub.igs),
+length(salv.pub.igs),length(juan.pub.igs)))
+dat.f <- data.frame(values = c(lic.igs,ramey.igs,carib.igs,sc.igs,benit.pub.igs,
+salv.pub.igs,juan.pub.igs),
+                 vars = vars)
+labe<-paste(c("ben.pub","carib","juan.pub","liceo","ramey", "salv.pub","san car"))
+boxplot(values ~ vars, data = dat.f,notch=TRUE,xaxt = "n",  col = "lightgray",
+xlab = "",ylab="IGS")
+axis(1, labels = FALSE)
+text(x =  seq_along(labe), y = par("usr")[3] - 1, srt = 90, adj = 1,
+     labels = labe, xpd = TRUE)
+     
+par(mfrow=c(1,1))     
+schoolsummary() #igs by year for liceo
+     
+     summary(lm(values~vars,data=dat.f))#significant
+     anova.1<-aov(values~vars,data=dat.f)
+     summary(anova.1)
+     TukeyHSD(anova.1)
+     pairwise.t.test(dat.f$values,dat.f$vars)
+
+
+
