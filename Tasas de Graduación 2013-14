@@ -1,0 +1,70 @@
+##############################################################################
+# Se utiliza el programa gratuito de análisis estadístico R para contestar las 
+# siguientes preguntas:
+# 1. Las tasas de graduación de los estudiantes en las escuelas superiores 
+# públicas son diferentes por género. 
+# 2. La tasa de graduación de los estudiantes por debajo del nivel de pobreza 
+# es diferente por distrito. 
+# Se usa la data en el portal data.pr.gov que contiene las tasas de graduación 
+# de las escuelas superiores públicas de Puerto Rico para el año acádemico 
+# 2013-14.
+#
+# Este código corre en R 3.3.1 desde octubre 30, 2016. En caso de error,
+# verifique su versión de la data y de R ya que cambios pudieron haber occurido.
+# Creado por: Hilda I. Calderón, hilda.calderon@upr.edu
+#
+# R o RStudio para Windows se puden bajar en 
+# https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
+
+# NOTA: Cada linea que empieza con "#" el programa lo detecta como un comentario.
+
+# Primero se preparan las herramientas necesarias para trabajar en el ejemplo.
+
+# Se creará una función para instalar paquetes necesarios para esta aplicación. Función provista en https://gist.github.com/stevenworthington/3178163
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# Ahora verificamos si el paquete RSocrata está instalado en su máquina. Sino, ipak lo instala y hace disponible
+packages <- c("RSocrata") # este paquete se usa para cargar la data de data.pr.gov al programa R
+ipak(packages) #instala o activa paquetes necesarios
+data = read.socrata("https://data.pr.gov/Educaci-n/Tasas-de-graduaci-n-en-las-escuelas-superiores-p-b/aysg-wxf9") # Carga la data de tasas de graduación directamente del portal data.pr.gov.
+
+names(data)[c(1,4,9)] = c('Region','Codigo.Escuela', 'Tasa.de.Graduacion') # Cambia los nombres de 3 columnas
+data$Tasa.de.Graduacion = as.numeric(sub('%',"", data$Tasa.de.Graduacion)) # Elimina el símbolo de porcentaje y convierte la variable de las tasas de graduación a númerica 
+data = data[data$Total.en.el.Cohorte!=0,] # Se eliminan las escuelas con cohorte igual a cero
+
+#-----------  Pregunta 1 ----------
+
+data.genero = with(data, data[Sub.grupo%in%c('FEMENINO','MASCULINO'),]) # Se seleccionan las filas de tasas correspondientes a los sub grupos por género
+data.genero = with(data.genero, data.genero[Codigo.Escuela%in%names(table(Codigo.Escuela)[table(Codigo.Escuela)==2]),]) # Se elimina una escuela que solo tiene 5 estudiantes masculinos y 0 femeninos
+data.genero$Sub.grupo <- droplevels(data.genero$Sub.grupo) # Se eliminan los sub grupos que no se utilizan en el análisis
+boxplot(Tasa.de.Graduacion~Sub.grupo, data.genero, ylab = 'Tasa de Graduación', yaxt="n", main = 'Tasas de Graduación por Género') # Diagrama de caja de las Tasas de graduación por género
+axis(side=2, las = T, at = pretty(data.genero$Tasa.de.Graduacion), lab=paste0(pretty(data.genero$Tasa.de.Graduacion), "%")) # Se colocan los valores del eje de y en dirección horizontal y se añade el simbolo de %
+
+t = with(data.genero, t.test(Tasa.de.Graduacion[Sub.grupo == 'FEMENINO'], Tasa.de.Graduacion[Sub.grupo == 'MASCULINO'], paired = T)) # Se hace una prueba t para verificar si la diferencia de las tasas para ambos géneros es diferente de cero
+
+#--------- Pregunta 2 --------------
+
+distritos = c('BARRANQUITAS', 'CIDRA', 'SAN JUAN II') # Se seleccionan los tres distritos que se desean comparar
+
+data.dist = data[data$Distrito%in%distritos, ] # Se seleccionan las tasas de las escuelas que pertenecen a los 3 distritos seleccionados.
+
+data.pobreza = data.dist[data.dist$Sub.grupo=='POR DEBAJO DEL NIVEL DE POBREZA', ]# Se seleccionan las filas correspondientes a las tasas para el sub grupo de estudiantes por debajo del nivel de pobreza.
+data.pobreza = data.pobreza[data.pobreza$Tasa.de.Graduacion!=0,] # Se eliminan las escuelas con tasas de graduación igual a cero.
+data.pobreza$Distrito=droplevels(data.pobreza$Distrito) # Se eliminan los distritos que no se utilizaran en el análisis
+
+boxplot(Tasa.de.Graduacion~Distrito, data.pobreza, ylab = 'Tasa de Graduación', yaxt="n", main = 'Tasas de Graduación por Distrito',cex.axis=0.75) # Diagrama de caja de las tasas de graduación por distrito para los estudiantes por debajo del nivel de pobreza
+axis(side=2, las = T, at = pretty(data.pobreza$Tasa.de.Graduacion), lab=paste0(pretty(data.pobreza$Tasa.de.Graduacion), "%")) # Se colocan los valores del eje de y en dirección horizontal y se añade el simbolo de %
+
+a = aov(Tasa.de.Graduacion~Distrito, data = data.pobreza) # Se realiza el análisis de varianza (ANOVA) para determinar si hay diferencia significativa en las tasas de graduación por distrito
+summary(a)
+
+TukeyHSD(a, "Distrito", ordered = TRUE) # Se realiza la prueba de comparaciones múltiples para determinar los distritos con tasas diferentes
+
+op = par(oma=c(0,5,0,0)) # Se modifican los márgenes del área de los plots
+plot(TukeyHSD(a, "Distrito", ordered = TRUE),las = T, cex.axis=.7) # Se hace un plot de la prueba anterior donde se pueden visualizar los distritos con tasas diferentes. Si el intervalo incluye el cero indica que no hay diferencia significativa entre esos dos distritos.
+par(op)
