@@ -1,3 +1,20 @@
+##############################################################################
+# Se utiliza el programa gratuito de análisis estadístico llamado R para obtener
+# el número de entradas y salidas del tren urbano usando la data en el portal data.pr.gov.
+# R o RStudio para Windows se puden bajar en https://cran.r-project.org/bin/windows/base/ o 
+# https://www.rstudio.com/products/rstudio/download3/
+# Este código corre en R 3.3.1 desde noviembre 29, 2016. En caso de error,
+# verifique su versión de la data y de R ya que cambios pudieron haber occurido.
+
+# NOTA: Cada línea que empieza con "#" el programa lo detecta como un comentario.
+
+#Instrucciones: Solo debe copiar el código y pegarcon en la consola de R o RStudio, y precionar enter. Se abrirá una ventana 
+#               automaticamente el cual tiene las opciones de años, meses y entradas o salidas. Seleccione un año, entrada o salida
+#               y un mes. Los circulos que aparecerán en el mapa representan una proporción del los valores reales.
+
+# Primero se preparan las herramientas necesarias para trabajar en el ejemplo.
+# Se creará una función para instalar paquetes necesarios para esta aplicación. Función provista en https://gist.github.com/stevenworthington/3178163
+
 ipak <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg)) 
@@ -8,7 +25,6 @@ ipak <- function(pkg){
 # Ahora verificamos si el paquete data.table está instalado en su máquina. Sino, ipak lo instala y hace disponible
 packages <- c("shiny","leaflet","RSocrata") # este paquete se usa para cargar la data de data.pr.gov al programa R
 ipak(packages) #instala o activa paquete necesario
-
 
 ui = fluidPage(
      navbarPage("Year",
@@ -328,6 +344,6 @@ server <- function(input, output) {
 # Run the application 
 shinyApp(ui = ui, server = server)
 
-
+#Creado por: Angel G. Velázquez
   
   
