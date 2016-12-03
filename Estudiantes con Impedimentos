@@ -3,7 +3,7 @@
 # el porcentaje de impedimentos en Puerto Rico. R o RStudio para Windows se puden bajar en 
 # https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
 # Este código corre en R 3.3.1 desde Noviembre 17, 2016. En caso de error, verifique su versión de la data y de R ya 
-#que cambios pudieron haber occurido.
+# que cambios pudieron haber occurido.
 
 #NOTA: Cada linea que empieza con "#" el programa lo detecta como un comentario.
 
@@ -16,10 +16,11 @@ ipak <- function(pkg){
     install.packages(new.pkg, dependencies = TRUE)
   sapply(pkg, require, character.only = TRUE)
 }
- 
+
+# Descargamos la data de interner al programa R.
 data <- read.socrata("https://data.pr.gov/Educaci-n/Estudiantes-servicos-con-Impedimentos-del-2011-al-/qgn3-ejjb")
 
-#Con el comando colSums se suma por columna, osea, por cada impedimento
+# Con el comando colSums se suma por columna, osea, por cada impedimento
 totals <- colSums(data[3:15], na.rm = TRUE)
 
 #Abreviamos los impedemintos para mejor visualización
