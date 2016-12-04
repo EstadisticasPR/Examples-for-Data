@@ -17,6 +17,10 @@ ipak <- function(pkg){
   sapply(pkg, require, character.only = TRUE)
 }
 
+# Ahora verificamos si el paquete data.table está instalado en su máquina. Sino, ipak lo instala y hace disponible
+packages <- "RSocrata" # este paquete se usa para cargar la data de data.pr.gov al programa R
+ipak(packages) #instala o activa paquete necesario
+
 data <- read.socrata("https://data.pr.gov/Educaci-n/Estudiantes-servicos-con-Impedimentos-del-2011-al-/qgn3-ejjb") # Descargamos la data de internet al programa R.
 data<-data[which(data$AÑO.ESCOLAR=="01/01/2012 12:00:00 AM"),] # Selecciona las fechas año 2012
 
