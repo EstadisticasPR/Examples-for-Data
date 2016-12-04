@@ -36,4 +36,4 @@ rate <- round(totals/sumtotals*10000, digits = 2) # Calula número de impediment
 bp <- barplot(rate, las = 2, main = "Distribución de estudiantes con impedimentos 2011-2012",names.arg = abr, ylim=c(0,5000),cex.names = .75,
               col = "gray",ylab = "Tasa de Impedimentos")
 legend("topleft", ncol=3, "valores por cada 10,000 estudiantes",cex=0.8,bty="n") # Crea una leyenda pero en este caso añade texto dentro de la gráfica
-text(bp, percent+100, percent, cex=.75, adj = .6) # Añade valor exacto para cada barra en la gráfica.
+text(bp, rate+100, rate, cex=.75, adj = .6) # Añade valor exacto para cada barra en la gráfica.
