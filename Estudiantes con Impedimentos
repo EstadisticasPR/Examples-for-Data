@@ -17,53 +17,19 @@ ipak <- function(pkg){
   sapply(pkg, require, character.only = TRUE)
 }
 
-# Descargamos la data de interner al programa R.
-data <- read.socrata("https://data.pr.gov/Educaci-n/Estudiantes-servicos-con-Impedimentos-del-2011-al-/qgn3-ejjb")
+data <- read.socrata("https://data.pr.gov/Educaci-n/Estudiantes-servicos-con-Impedimentos-del-2011-al-/qgn3-ejjb") # Descargamos la data de internet al programa R.
+data<-data[which(data$AÑO.ESCOLAR=="01/01/2012 12:00:00 AM"),] # Selecciona las fechas año 2012
 
 # Con el comando colSums se suma por columna, osea, por cada impedimento
 totals <- colSums(data[3:15], na.rm = TRUE)
 
-#Abreviamos los impedemintos para mejor visualización
+# Creamos una variable con las abreviaciones para cada impedimento.
 abr <- c("AUT", "TRAU_CEL", "DIS_EMO", "IMP_MUL", "IMP_VIS", "OTROS", "AUD", "HAB&LENG", "APREN", "ORT",  "DEF_INTL", "RETR_INTL", "SOR_CIEGO")
 
-#Sacamos el porcentaje de cada impedimento dividiendolo por la suma de los totales y multiplicandolo por 100
-percent <- round(totals/sum(totals)*100, digits = 2)
+percent <- round(totals/sum(totals)*10000, digits = 2) # Calula número de impedimentos por cada 10,000 estudiantes.
 
-#Usamos el comando barplot para hacer la gráfica con los porcentajes
-#le ponemos los límites del eje y (0,50), con la opción "las" rotamos los nombres de 
-#los labels verticalmente, con "names.arg" se abrevia cada nombre de cada impedimento,
-#con "raibow" damos color a las barras, con "main" le ponemos título a la gráfica 
-#y con "text" le decimos que ponga los porcentajes en cima de cada barra.
-bp <- barplot(percent, ylim = c(0,50), las = 2,
-              names.arg = abr, cex.names = .75,
-              col = rainbow(length(percent)),
-              main = "% de Estudiantes con Impedimentos")
-text(bp, percent+2, percent, cex=.75)
-
-
-#Abreviamos los impdemintos para mejor visualización
-abr <- c("AUT", "DIS_EMO", "IMP_MUL", "OTROS", "HAB&LENG", "APREN",  "DEF_INTL")
-
-#Sacamos el porcentaje de cada impedimento dividiendolo por la suma de los totales y multiplicandolo por 100
-percent <- totals/sum(totals)*100
-
-#Clasificamos los índices entre mayor de un porciento y menor a un porciento.
-ind1 <- which(percent <= 1)
-ind2 <- which(percent > 1)
-
-# Sumamos los que sean menor 1% con sum(percent[ind1])) a los otros. Luego tomamos los de mayor 
-# de 1% redondeamos con el comando round hasta dos puntos decimales.
-percent[6] <- percent[6] + sum(percent[ind1])
-percent <- round(percent[ind2], digits = 2)
-
-#Usamos el comando barplot para hacer la gráfica con los porcentajes
-#le ponemos los límites del eje y (0,50), con la opción "las" rotamos los nombres de 
-#los labels verticalmente, con "names.arg" se abrevia cada nombre de cada impedimento,
-#con "raibow" damos color a las barras, con "main" le ponemos título a la gráfica 
-#y con "text" le decimos que ponga los porcentajes en cima de cada barra.
-bp <- barplot(percent, ylim = c(0,50), las = 2,
-              names.arg = abr, cex.names = .75,
-              col = rainbow(length(percent)),
-              main = "% de Estudiantes con Impedimentos")
-text(bp, percent+2, percent, cex=.75)
-        
+# Creamos una gráfica de barras.
+bp <- barplot(percent, las = 2, main = "Distribución de estudiantes con impedimentos 2011-2012",names.arg = abr, ylim=c(0,5000),cex.names = .75,
+              col = "gray",ylab = "Tasa de Impedimentos 2012")
+legend("topleft", ncol=3, "valores por cada 10,000 estudiantes",cex=0.8,bty="n") # Crea una leyenda pero en este caso añade texto dentro de la gráfica
+text(bp, percent+100, percent, cex=.75, adj = .6) # Añade valor exacto para cada barra en la gráfica.
