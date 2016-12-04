@@ -140,16 +140,17 @@ ui = fluidPage(
   )
 )
 
-d.tren <- read.socrata("https://www.indicadores.pr/dataset/N-mero-de-pasajeros-del-Tren-Urbano-Patrocinio-Tre/yvww-vrxd")
-names(d.tren)[1] <- "Fecha"
+d.tren <- read.socrata("https://www.indicadores.pr/dataset/N-mero-de-pasajeros-del-Tren-Urbano-Patrocinio-Tre/yvww-vrxd") # baja la base de datos al programa.
+names(d.tren)[1] <- "Fecha" # Sustituye el nombre de la primera columna de la base de datos por Fecha.
 
-nyr <- as.character(d.tren$Fecha, format = "%Y")
-nm <-as.character(d.tren$Fecha,format= "%m")
-d.tren <- cbind(nyr,nm,d.tren[2:35])
+nyr <- as.character(d.tren$Fecha, format = "%Y") # Divide las fechas por año.
+nm <-as.character(d.tren$Fecha,format= "%m") #Divide las fechas por meces.
+d.tren <- cbind(nyr,nm,d.tren[2:35]) # Crea una base de datos nuevas que contiene año y fechas dicididas por columna
 
-entradas<- split(d.tren[3:18],d.tren$nyr)
-salidas<- split(d.tren[20:35],d.tren$nyr)
+entradas<- split(d.tren[3:18],d.tren$nyr) # Extrae todas las entradas de la base de datos.
+salidas<- split(d.tren[20:35],d.tren$nyr) # Extrae todas las salidas de la base de datos.
 
+# Separa las entradas y salidas por año.
 ent2010=as.data.frame(entradas$`2010`)
 sal2010=as.data.frame(salidas$`2010`)
 ent2011=as.data.frame(entradas$`2011`)
@@ -165,6 +166,7 @@ sal2015=as.data.frame(salidas$`2015`)
 ent2016=as.data.frame(entradas$`2016`)
 sal2016=as.data.frame(salidas$`2016`)
 
+# Intercambia las colunmas por filas.
 entradas2010=data.frame(t(ent2010))
 salidas2010=data.frame(t(sal2010))
 entradas2011=data.frame(t(ent2011))
@@ -178,15 +180,18 @@ salidas2014=data.frame(t(sal2014))
 entradas2015=data.frame(t(ent2015))
 salidas2015=data.frame(t(sal2015))
 
+# Creamos una base de datos con los nombres de cada estación.
 estacion<-c("Bayamon -","Deportivo -","Jardines -","Torrimar -","Martinez Nadal -","Las Lomas -",
             "San Francisco -","Centro Medico -","Cupey -","Rio Piedras -","Universidad -","Pinero -",
             "Domenech -","Rossevelt -","Hato Rey -","Sagrado Corazon -")
 
+# Asignamos latitud y longitud para cada estación.
 lat <- c(18.400641,18.394287,18.394109,18.391491,18.39109,18.390786,18.390806,18.39152,
          18.390395,18.398968,18.405085,18.41096,18.415581,18.423306,18.429448,18.43619)
 lng <- c(-66.153781,-66.149171,-66.127984,-66.117701,-66.101877,-66.094314,-66.082522,-66.074914
          ,-66.063386,-66.05236,-66.051823,-66.055407,-66.056422,-66.058934,-66.060229,-66.060367)
 
+# crea una base de datos con los 3 vectores de estacion, latitud y longitud.
 est<-data.frame(estacion,lat,lng)
 
 server <- function(input, output) {   
