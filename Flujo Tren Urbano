@@ -36,14 +36,14 @@ ui = fluidPage(
           sidebarPanel(h3("Seleccione"),column(4, 
               br(), 
               br(),
-              checkboxInput("entradas.2010", "Entradas", FALSE), # Crea un encasillado para seleccionar entradas.
-              checkboxInput("salidas.2010", "Salidas", FALSE), # Crea un encasillado para seleccionar salidas.
-              checkboxGroupInput("month10", "", # Crea varios encasillados para seleccionar diferentes meces.
+              checkboxInput("entradas.2010", "Entradas", FALSE), 
+              checkboxInput("salidas.2010", "Salidas", FALSE), 
+              checkboxGroupInput("month10", "", 
                                  choices=c("January" = "1", "February" = "2", "March" = "3", "April" = "4",
                                            "May"= "5", "June" = "6", "July" = "7","August" = "8", "September" = "9",
                                            "Octover" = "10", "November" = "11", "December" = "12"),selected = "1"))
             ),
-          mainPanel( # Donde trabajamos o se expone el trabajaro principal, en este caso un mapa.
+          mainPanel( 
             leafletOutput("mapa2010", width = "100%", height = "400px"), # Crea un mapa.                      
           )
         )
