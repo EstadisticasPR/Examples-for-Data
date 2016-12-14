@@ -29,12 +29,12 @@ ipak(packages) #instala o activa paquete necesario
 #     ui: se diseña la aplicación
 #     server: se aplican los comandos diseñados en el ui.
 
-ui = fluidPage( # Crea un diseño de filas y columnas, estoy es para organizar nuestra aplicación.
-     navbarPage("Year", # Crea una barra de navegación en la parte superior. 
-      tabPanel("2010", # botón para navegar en los resultados para el 2010.
-        sidebarLayout(position = "right", # Crea un espacio al lado derecho de la pantalla.
-          sidebarPanel(h3("Seleccione"),column(4, # Crea un panel en el espacio que se había creado en la linea anterior.
-              br(), # Deja una linea en blanco.
+ui = fluidPage(
+     navbarPage("Year", 
+      tabPanel("2010", 
+        sidebarLayout(position = "right", 
+          sidebarPanel(h3("Seleccione"),column(4, 
+              br(), 
               br(),
               checkboxInput("entradas.2010", "Entradas", FALSE), # Crea un encasillado para seleccionar entradas.
               checkboxInput("salidas.2010", "Salidas", FALSE), # Crea un encasillado para seleccionar salidas.
