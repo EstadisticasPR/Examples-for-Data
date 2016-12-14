@@ -14,7 +14,6 @@
 
 # Primero se preparan las herramientas necesarias para trabajar en el ejemplo.
 # Se creará una función para instalar paquetes necesarios para esta aplicación. Función provista en https://gist.github.com/stevenworthington/3178163
-
 ipak <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg)) 
@@ -26,27 +25,31 @@ ipak <- function(pkg){
 packages <- c("shiny","leaflet","RSocrata") # este paquete se usa para cargar la data de data.pr.gov al programa R
 ipak(packages) #instala o activa paquete necesario
 
-ui = fluidPage(
-     navbarPage("Year",
-      tabPanel("2010",
-        sidebarLayout(position = "right", 
-          sidebarPanel(h3("Seleccione"),column(4,
+# Las aplicaciones estan compuestas por dos partes: 
+#     ui: se diseña la aplicación
+#     server: se aplican los comandos diseñados en el ui.
+
+ui = fluidPage( # Crea un diseño de filas y columnas, estoy es para organizar nuestra aplicación.
+     navbarPage("Year", # Crea una barra de navegación en la parte superior. 
+      tabPanel("2010", # botón para navegar en los resultados para el 2010.
+        sidebarLayout(position = "right", # Crea un espacio al lado derecho de la pantalla.
+          sidebarPanel(h3("Seleccione"),column(4, # Crea un panel en el espacio que se había creado en la linea anterior.
+              br(), # Deja una linea en blanco.
               br(),
-              br(),
-              checkboxInput("entradas.2010", "Entradas", FALSE),
-              checkboxInput("salidas.2010", "Salidas", FALSE),
-              checkboxGroupInput("month10", "", 
+              checkboxInput("entradas.2010", "Entradas", FALSE), # Crea un encasillado para seleccionar entradas.
+              checkboxInput("salidas.2010", "Salidas", FALSE), # Crea un encasillado para seleccionar salidas.
+              checkboxGroupInput("month10", "", # Crea varios encasillados para seleccionar diferentes meces.
                                  choices=c("January" = "1", "February" = "2", "March" = "3", "April" = "4",
                                            "May"= "5", "June" = "6", "July" = "7","August" = "8", "September" = "9",
                                            "Octover" = "10", "November" = "11", "December" = "12"),selected = "1"))
             ),
-          mainPanel(
-            leafletOutput("mapa2010", width = "100%", height = "400px"),
-            dataTableOutput("table10")
-            
+          mainPanel( # Donde trabajamos o se expone el trabajaro principal, en este caso un mapa.
+            leafletOutput("mapa2010", width = "100%", height = "400px"), # Crea un mapa.                      
           )
         )
     ),
+    
+ # Los pasos anteriores se repiten para los demas botones de navegación: 2011, 2012, 2013, 2014 y 2015.
       tabPanel("2011",
         sidebarLayout(position = "right",
           sidebarPanel(h3("Seleccione"),column(4,
@@ -140,7 +143,7 @@ ui = fluidPage(
   )
 )
 
-d.tren <- read.socrata("https://www.indicadores.pr/dataset/N-mero-de-pasajeros-del-Tren-Urbano-Patrocinio-Tre/yvww-vrxd") # baja la base de datos al programa.
+d.tren <- read.socrata("https://www.indicadores.pr/dataset/N-mero-de-pasajeros-del-Tren-Urbano-Patrocinio-Tre/yvww-vrxd") # Baja la base de datos al programa.
 names(d.tren)[1] <- "Fecha" # Sustituye el nombre de la primera columna de la base de datos por Fecha.
 
 nyr <- as.character(d.tren$Fecha, format = "%Y") # Divide las fechas por año.
@@ -194,16 +197,18 @@ lng <- c(-66.153781,-66.149171,-66.127984,-66.117701,-66.101877,-66.094314,-66.0
 # crea una base de datos con los 3 vectores de estacion, latitud y longitud.
 est<-data.frame(estacion,lat,lng)
 
-server <- function(input, output) {   
+server <- function(input, output) {  # Segunda parte de la aplicación.
+  # Aplicamos la información bajada de internet al mapa.
   output$mapa2010 <- renderLeaflet({
     leaflet(est) %>% addTiles() %>%
       fitBounds(~min(lng), ~min(lat), ~max(lng), ~max(lat))
   })
   
   observe({
-    values <- vector(mode = "integer", length = 16)
+    values <- vector(mode = "integer", length = 16) # Creamos una vector.
     
-      if(length(input$month10) == 1 & input$entradas.2010) {
+    # Ahora le damos función a los encasillados.
+    if(length(input$month10) == 1 & input$entradas.2010) { 
         for(i in 1:input$month10) {
           values <- entradas2010[,i]
           }
@@ -214,6 +219,7 @@ server <- function(input, output) {
       }
     }
     
+    # Imprime el mapa segú los encasillados seleccionados.
     leafletProxy('mapa2010', data = est ) %>% 
       clearShapes() %>%
       addCircles(lng = ~lng, lat = ~lat, weight = 1,
@@ -221,6 +227,7 @@ server <- function(input, output) {
     
   })
 
+# De igual forma con los demás paneles creados al principio.
   output$mapa2011 <- renderLeaflet({
     leaflet(est) %>% addTiles() %>%
       fitBounds(~min(lng), ~min(lat), ~max(lng), ~max(lat))
