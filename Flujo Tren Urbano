@@ -41,7 +41,7 @@ ui = fluidPage( # Crea un diseño de filas y columnas, estoy es para organizar n
               checkboxGroupInput("month10", "", # Crea varios encasillados para seleccionar diferentes meces.
                                  choices=c("January" = "1", "February" = "2", "March" = "3", "April" = "4",
                                            "May"= "5", "June" = "6", "July" = "7","August" = "8", "September" = "9",
-                                           "Octover" = "10", "November" = "11", "December" = "12"),selected = "1"))
+                                           "October" = "10", "November" = "11", "December" = "12"),selected = "1"))
             ),
           mainPanel( # Donde trabajamos o se expone el trabajaro principal, en este caso un mapa.
             leafletOutput("mapa2010", width = "100%", height = "400px")  # Crea un mapa.                   
@@ -61,7 +61,7 @@ ui = fluidPage( # Crea un diseño de filas y columnas, estoy es para organizar n
                label = h3(""), 
                choices = list("January" = "01", "February" = "02", "March" = "03", "April" = "04",
                               "May"= "05", "June" = "06", "July" = "07","August" = "08", "September" = "09",
-                              "Octover" = "10", "November" = "11", "December" = "12"),selected = "01"))
+                              "October" = "10", "November" = "11", "December" = "12"),selected = "01"))
          ),
          mainPanel(
           leafletOutput("mapa2011", width = "100%", height = "400px")
@@ -79,7 +79,7 @@ ui = fluidPage( # Crea un diseño de filas y columnas, estoy es para organizar n
                       label = h3(""), 
                       choices = list("January" = "01", "February" = "02", "March" = "03", "April" = "04",
                                      "May"= "05", "June" = "06", "July" = "07","August" = "08", "September" = "09",
-                                     "Octover" = "10", "November" = "11", "December" = "12"),selected = "01"))
+                                     "October" = "10", "November" = "11", "December" = "12"),selected = "01"))
               ),
         mainPanel(
             leafletOutput("mapa2012", width = "100%", height = "400px")
@@ -97,7 +97,7 @@ ui = fluidPage( # Crea un diseño de filas y columnas, estoy es para organizar n
                         label = h3(""), 
                         choices = list("January" = "01", "February" = "02", "March" = "03", "April" = "04",
                                        "May"= "05", "June" = "06", "July" = "07","August" = "08", "September" = "09",
-                                        "Octover" = "10", "November" = "11", "December" = "12"),selected = "01"))
+                                        "October" = "10", "November" = "11", "December" = "12"),selected = "01"))
                 ),
           mainPanel(
             leafletOutput("mapa2013", width = "100%", height = "400px")
@@ -115,7 +115,7 @@ ui = fluidPage( # Crea un diseño de filas y columnas, estoy es para organizar n
                             label = h3(""), 
                             choices = list("January" = "01", "February" = "02", "March" = "03", "April" = "04",
                                            "May"= "05", "June" = "06", "July" = "07","August" = "08", "September" = "09",
-                                            "Octover" = "10", "November" = "11", "December" = "12"),selected = "01"))
+                                            "October" = "10", "November" = "11", "December" = "12"),selected = "01"))
             ),
          mainPanel(
               leafletOutput("mapa2014", width = "100%", height = "400px")
@@ -133,7 +133,7 @@ ui = fluidPage( # Crea un diseño de filas y columnas, estoy es para organizar n
                             label = h3(""), 
                             choices = list("January" = "01", "February" = "02", "March" = "03", "April" = "04",
                                            "May"= "05", "June" = "06", "July" = "07","August" = "08", "September" = "09",
-                                            "Octover" = "10", "November" = "11", "December" = "12"),selected = "01"))
+                                            "October" = "10", "November" = "11", "December" = "12"),selected = "01"))
             ),
         mainPanel(
           leafletOutput("mapa2015", width = "100%", height = "400px")
