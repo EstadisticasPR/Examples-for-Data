@@ -1,0 +1,124 @@
+##############################################################################
+# Utilizamos el programa gratuito de análisis estadístico llamado R para estudiar
+# el consumo de energía en PR para tres sectores: residencial, comercial 
+# e industrial para el periodo julio 1999 - septiembre 2016. La data se 
+# obtuvo del portal indicadores.pr.
+# R o RStudio para Windows se puden bajar en 
+# https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/.
+# Este código corre en R 3.3.1 desde octubre 30, 2016. En caso de error,
+# verifique su versión de la data y de R ya que cambios pudieron haber occurido.
+# Creado por: Angel Velázquez, angel.velazquez@upr.edu
+
+# NOTA: Cada línea que empieza con "#" el programa lo detecta como un comentario.
+
+# Primero se preparan las herramientas necesarias para trabajar en el ejemplo.
+
+# Se creará una función para instalar paquetes necesarios para esta aplicación. Función provista en https://gist.github.com/stevenworthington/3178163
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# Ahora verificamos si el paquete data.table está instalado en su máquina. Sino, ipak lo instala y hace disponible
+packages <- c("data.table") # este paquete se usa para cargar la data de data.pr.gov al programa R
+ipak(packages) #instala o activa paquetes necesarios
+energia=fread("https://www.indicadores.pr/resource/njn4-bx42.csv", data.table = F)
+
+# Escojemos las columnas de consumo de tres sectores: 
+# residencial, comercial e industrial y las ordenamos por Fecha (mes y año).
+d.consumo <- data.frame(Fecha=energia$mes, Residencial=energia$consumo_residencial_mkwh, 
+                        Comercial=energia$consumo_comercial_mkwh,Industrial=energia$consumo_industrial_mkwh)
+
+d.consumo <- d.consumo[order(d.consumo$Fecha),]
+
+# Guarademos los datos como objetos de series de tiempo usando la función ts() 
+# para poder analizar los datos usando las funciones que ofrece R.
+ts.residencial <- ts(c(d.consumo$Residencial),frequency=12,start=c(1999,7))
+
+ts.comercial <- ts(c(d.consumo$Comercial),frequency=12,start=c(1999,7))
+
+ts.industrial <- ts(c(d.consumo$Industrial),frequency=12,start=c(1999,7))
+
+# Vamos a descomponer la serie de tiempo de temporada en tres componentes: época,
+# tendencia y aleatorio, para los tres sectores.
+dec.residencial = decompose(ts.residencial, "additive")
+dec.comercial = decompose(ts.comercial, "additive")
+dec.industrial = decompose(ts.industrial, "additive")
+
+# Creamos una función personalizada para graficar los tres componentes de la 
+# serie de tiempo (Se puede utilizar plot()).
+plot.decom = function(ts, dts, sector){
+  op = par(mfrow = c(4,1),oma = c(2,1,0,1), mar = c(3,5,1.5,1)+.1)
+ 
+  time = unique(time(ts))
+  dates = seq(as.Date("1999-07-01"), by = "month", along = ts)
+  
+  plot(dts$x, ylab="data", xlab=NULL, xaxt = "n", main = paste("Descomposición de la serie de tiempo del consumo de energía",sector))
+  
+  axis(1, at = seq(time[7], time[length(time)], by = 1), labels = FALSE , tcl=-.8)
+  
+  text(x=seq(time[7], time[length(time)], by = 1), y=par()$usr[3]-0.1*(par()$usr[4]-par()$usr[3]),
+       labels=format(seq(dates[7], dates[length(dates)], by = 'year'), "%b-%y"), srt=90, adj=1.25, xpd=TRUE, cex=.8)
+  
+  axis(1, at = seq(time[1], time[length(time)], by = 1), labels = FALSE, tcl=-.8)
+  
+  text(x=seq(time[1], time[length(time)], by = 1), y=par()$usr[3]-0.1*(par()$usr[4]-par()$usr[3]),
+       labels=format(seq(dates[1], dates[length(dates)], by = 'year'), "%b-%y"), srt=90, adj=1.25, xpd=TRUE, cex=.8)
+  
+  axis(1, at = time, labels = FALSE, tcl = -0.3)
+  
+  plot(dts$seasonal, main = NULL, ylab="época", xlab=NULL,  xaxt = "n")
+  axis(1, at = seq(time[7], time[length(time)], by = 1), labels = FALSE , tcl=-.8)
+  
+  text(x=seq(time[7], time[length(time)], by = 1), y=par()$usr[3]-0.1*(par()$usr[4]-par()$usr[3]),
+       labels=format(seq(dates[7], dates[length(dates)], by = 'year'), "%b-%y"), srt=90, adj=1.25, xpd=TRUE,  cex=.8)
+  
+  axis(1, at = seq(time[1], time[length(time)], by = 1), labels = FALSE, tcl=-.8)
+  
+  text(x=seq(time[1], time[length(time)], by = 1), y=par()$usr[3]-0.1*(par()$usr[4]-par()$usr[3]),
+       labels=format(seq(dates[1], dates[length(dates)], by = 'year'), "%b-%y"), srt=90, adj=1.25, xpd=TRUE,  cex=.8)
+  
+  axis(1, at = time, labels = FALSE, tcl = -0.3)
+  
+  plot(dts$trend,main = NULL, ylab="tendencia",  xlab=NULL, xaxt = "n")
+  axis(1, at = seq(time[7], time[length(time)], by = 1), labels = FALSE , tcl=-.8)
+  
+  text(x=seq(time[7], time[length(time)], by = 1), y=par()$usr[3]-0.1*(par()$usr[4]-par()$usr[3]),
+       labels=format(seq(dates[7], dates[length(dates)], by = 'year'), "%b-%y"), srt=90, adj=1.25, xpd=TRUE,  cex=.8)
+  
+  axis(1, at = seq(time[1], time[length(time)], by = 1), labels = FALSE, tcl=-.8)
+  
+  text(x=seq(time[1], time[length(time)], by = 1), y=par()$usr[3]-0.1*(par()$usr[4]-par()$usr[3]),
+       labels=format(seq(dates[1], dates[length(dates)], by = 'year'), "%b-%y"), srt=90, adj=1.25, xpd=TRUE,  cex=.8)
+  
+  axis(1, at = time, labels = FALSE, tcl = -0.3)
+  
+  plot(dts$random, ylab="aleatorio", main = NULL, xlab=NULL, xaxt = "n")
+  
+  axis(1, at = seq(time[7], time[length(time)], by = 1), labels = FALSE , tcl=-.8)
+  
+  text(x=seq(time[7], time[length(time)], by = 1), y=par()$usr[3]-0.1*(par()$usr[4]-par()$usr[3]),
+       labels=format(seq(dates[7], dates[length(dates)], by = 'year'), "%b-%y"), srt=90, adj=1.25, xpd=TRUE,  cex=.8)
+  
+  axis(1, at = seq(time[1], time[length(time)], by = 1), labels = FALSE, tcl=-.8)
+  
+  text(x=seq(time[1], time[length(time)], by = 1), y=par()$usr[3]-0.1*(par()$usr[4]-par()$usr[3]),
+       labels=format(seq(dates[1], dates[length(dates)], by = 'year'), "%b-%y"), srt=90, adj=1.25, xpd=TRUE,  cex=.8)
+  
+  axis(1, at = time, labels = FALSE, tcl = -0.3)
+  par(op)
+}
+
+# Análisis de los componentes del consumo de energía residencial
+plot.decom(ts.residencial, dec.residencial, sector='residencial')
+dec.residencial$seasonal 
+
+# Análisis de los componentes del consumo de energía comercial
+plot.decom(ts.comercial, dec.comercial, "comercial")
+dec.comercial$seasonal 
+
+# Análisis de los componentes del consumo de energía industrial
+plot.decom(ts.industrial, dec.industrial, "industrial")
+dec.industrial$seasonal
