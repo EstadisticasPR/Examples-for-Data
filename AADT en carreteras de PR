@@ -1,0 +1,61 @@
+##############################################################################
+# Se utiliza el programa gratuito de análisis estadístico llamado R para 
+# observar el AADT (Annual Average Daily Traffic) en un tramo de la PR-52 en 
+# el periodo 2002-2014 usando los datos disponibles en el portal data.pr.gov.
+#
+# R o RStudio para Windows se puden bajar en 
+# https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
+# Este código corre en R 3.3.1 desde diciembre, 2016. En caso de error,
+# verifique su versión de los datos y de R ya que cambios pudieron haber occurido.
+# Creado por: Hilda I. Calderón
+
+# NOTA: Cada línea que empieza con "#" el programa lo detecta como un comentario.
+
+# Primero se preparan las herramientas necesarias para trabajar en el ejemplo.
+
+# Se creará una función para instalar paquetes necesarios para esta aplicación. Función provista en https://gist.github.com/stevenworthington/3178163
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# Ahora verificamos si el paquete RSocrata está instalado en su máquina. Sino, ipak lo instala y hace disponible
+packages <- c("RSocrata", "plyr", "rminer", "ggplot2", "dplyr", "leaflet", "yaml") # este paquete se usa para cargar los datos de data.pr.gov al programa R
+ipak(packages) #instala o activa paquetes necesarios
+
+data <- read.socrata("https://data.pr.gov/Transportaci-n/Annual-Average-Daily-Traffic-AADT-Transito-Promedi/7kaq-zyym") # Carga los datos de AADT directamente del portal.
+
+data$ANO = as.Date(data$ANO, format = "%m/%d/%Y") # Se cambia el formato de la variable ANO a formato de fecha
+data$ANO = format(data$ANO,format= "%Y")
+data$ANO = as.factor(data$ANO) # Se seleciona solo el año de la fecha y se cambia la estructura de la variable de 'character' a 'factor'
+data$PR. = as.factor(data$PR.) # Se cambia la estructura de la variable PR. de 'character' a 'factor'
+
+# Verificamos si existen duplicados, i.e., filas con exactamente la misma información para todas las variables.
+data.dup <- data[duplicated(data) | duplicated(data, fromLast = TRUE), ]
+View(data.dup[order(data.dup$DESCRIPCIÓN, data.dup$MUNICIPIO),c(1,2,6,7)]) # Muestra donde occurren los duplicados
+
+data <- data[!duplicated(data),]# Removiendo duplicados
+
+carr = "52" # Se escoge la Carretera que se va a observar
+data.carr <- data[data$PR.==carr,] # Se escogen las filas que pertenecen a esta carretera
+table(data.carr$ANO) # Número de puntos por año para la carretera que se está observando
+ggplot(data.carr, aes(x=as.integer(as.character(ANO)), y=KM)) + 
+  geom_point()  + theme_bw() + scale_x_continuous(breaks=seq(2002, 2014, 2))# Se puede ver que para entre km 52 y 57 se tiene información para casi todos los años (excepto 2008 y 2011). 
+data.carr.seg <- data.carr[data.carr$KM<=57 & data.carr$KM>=52,] # Se selecciona la información entre el Km 52 y el Km 57
+table(data.carr.seg$ANO) # Número de puntos por año para el segmento o tramo que se está observando.
+
+# Mapa de la localización del km 52 y el Km 57 en la PR-52
+m <- leaflet() %>%
+  addTiles() %>%
+  addMarkers(lng=c(-66.2399770, -66.2149805), lat=c(18.0402770,18.0510969)) %>%
+  addPopups(lng=c(-66.2399770, -66.2149805), lat=c(18.0402770,18.0510969),c("PR-52 Km 57","PR-52 Km 52"))
+m  # Imprime el Mapa
+
+# Hacemos un gráfico del AADT en el tiempo para el tramo que se está observando 
+data.carr.seg$ANO = as.integer(as.character(data.carr.seg$ANO)) # Cambia la estructura de la variable año a enteros.
+data.carr.seg$grp = ifelse(data.carr.seg$ANO<2008,  "a", ifelse(data.carr.seg$ANO<2011 & data.carr.seg$ANO>2008, "b", "c") ) # Crea un vector de agrupamiento para crear los brincos en los años faltantes: 2008 y 2011.
+
+ggplot(data.carr.seg, aes(x=as.integer(as.character(ANO)), y=AADT)) + geom_point() + theme_bw() + xlab("AÑO") + scale_x_continuous(breaks=seq(2002, 2014, 2)) + geom_line(aes(group=grp))+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) # Gráfico del AADT para el periodo 2002-2014
+
