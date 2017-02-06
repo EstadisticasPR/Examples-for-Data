@@ -1,0 +1,61 @@
+##############################################################################
+# Utilizamos el programa gratuito de análisis estadístico llamado R para obtener
+# los candidatos políticos con mayores donaciones desde 2013-2016. R o RStudio para Windows se puden bajar en 
+# https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
+# Note que en adición a los datos de donaciones necesitamos la población para calcular el índice
+# y poder hacer las compraciones de los diferentes candidatos. 
+# Este código corrió en R 3.3.1 en enero 30, 2017. En caso de error, verifique su versión de los datos y de R ya que cambios pudieron haber occurido.
+# # Creado por: Angel G. Velázquez
+
+# NOTA: Cada linea que empieza con "#" el programa lo detecta como un comentario.
+
+# Primero preparamos las herramientas necesarias para trabajar en el ejemplo.
+
+# Se creará una función para instalar paquetes necesarios para esta aplicación. Función provista en 
+# https://gist.github.com/stevenworthington/3178163
+
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# Ahora verificamos si el paquete RSocrata está instalado en su máquina. Sino, ipak lo instala y hace disponible
+packages <- ("data.table") # Este paquete se usa para cargar los datos de data.pr.gov al programa R
+ipak(packages) # Instala o activa paquetes necesarios
+
+df<- fread("https://data.oce.gov.pr/api/views/kdwd-nb6g/rows.csv",data.table=FALSE) # Descarga la base de datos de donaciones.
+
+demo=fread("https://www.indicadores.pr/api/views/5pce-675z/rows.csv",data.table=FALSE) #Carga la base de datos demográfica al programa R.
+
+who <- agrep(pattern="Alcalde",df$Candidatura,ignore.case=T) # Vector para indentificar canditatos a las alcaldias.
+
+alc <- df[who,] # Sub-divide la base de datos a solo candidatos a alcaldias.
+alc$Candidatura[agrep(pattern = "Willian Miranda", alc$Candidato, ignore.case = TRUE)] = "Alcalde de Caguas" # Correción a la base de dato con el alcalde de caguas.
+alc$Cantidad <- as.numeric(gsub('\\$', '', alc$Cantidad)) # Elimina los signos de dolar en la base de datos y cambia la colunma de cantidad a formato de números.
+alc$Fecha <- as.Date(alc$Fecha, format = "%m/%d/%Y") # Cambia el formato de la colunma de fechas
+alc <- subset(alc, alc$Fecha >= as.Date("2013-1-1") & alc$Fecha <= as.Date("2016-11-07")) # Selecciona las donaciones entre 2013-2016.
+
+# Crea una nueva Base de datos
+donaciones <- data.frame(Name = alc$Candidato, Category=factor(alc$Candidatura) 
+                     ,Frequency = alc$Cantidad)
+
+# Crea la sumatoria de donaciones para cada candidato a alcalde
+candidatos <- aggregate(donaciones$Frequency, by = list(Candidate = donaciones$Name, Municipality = donaciones$Category), FUN=sum) 
+
+candidatos_m <- candidatos[with(candidatos, order(-candidatos$x)), ] # Ordena la sumatoria de mayor a menor.
+head(candidatos_m, n=11) # Imprime los primeros 11 candidatos con mayores donaciones.
+
+y2015<-which(demo[,1]==2015) # Escoge los datos de poblacion del 2015
+demo.15 = data.frame(Municipality = rownames(t(demo[y2015,-1])), Pop = matrix(t(demo[y2015,-1]))) # Crea un vector con la poblacion por municipio para el año 2015. 
+demo.15$Municipality = sub("\\.", " ", demo.15$Municipality) # Cambia el . por espacio en los nombres de los municipios. Ej. San.Juan -> San Juan.
+candidatos$Municipality <- as.character(gsub('\\Alcalde de ', '', candidatos$Municipality)) # Elimina "Alcalde de" para solo optener el nombre municipio para cada candidato.
+
+df.dpp = merge(candidatos, demo.15 , by = 'Municipality') # Une la base de datos de población con la de cantidatos con respecto a cada municipio.
+
+index = df.dpp$x/df.dpp$Pop # Divide cantidad de donaciones/población.
+
+df.dpp = cbind(df.dpp,index) # Une la variable index con la base de datos df.dpp 
+df.dpp <- df.dpp[with(df.dpp, order(-df.dpp$index)), ] # Ordena la base de datos de donaciones por persona de mayor a menor
+head(df.dpp, n=10) # Imprime los primeros 10 candidatos.
