@@ -1,0 +1,220 @@
+##############################################################################
+# We use the open source software for statistical analysis called R to asess
+# how relationship of drought conditions between locations. 
+# R or RStudio for Windows can be downloaded at 
+# https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
+# This code was ran on R 3.3.1 February, 4, 2017. 
+#
+# In contrast to other codes we have made available, this code requires the user sets up an account with
+# NOAA by going to https://www.ncdc.noaa.gov/cdo-web/token
+# 
+# BE AWARE that this code will first extract rainfall data from all stations available in Puerto Rico.
+# This may take a few minutes to run!
+#
+# If an error shows while running this code, verify the version of your data, R, 
+# and necessary packages since changes in these may have occured.
+# Also keep in mind that access to the internet is required to extract the data
+# Created by Roberto Rivera, roberto.rivera30@upr.edu
+
+#NOTE: Each line that starts with "#" R detects it as a comment.
+
+#We first create a function that checks if packages are installed, if they aren't, they installed and loaded 
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# load/install the necessary R packages for the case study.
+packages <- c("RSocrata","rnoaa", "devtools", "reshape2", "dplyr", "zoo", "forecast","tseries","fracdiff","taRifx","ggplot2","SCI", "RColorBrewer","ggmap")
+ipak(packages) #install required packages
+
+# Make sure you get your key to access NOAAs database: https://www.ncdc.noaa.gov/cdo-web/token
+options(noaakey="INSERT KEY WITHIN THESE QUOTES") #Enter your own NOAA key to the right
+
+# next, get station info
+station <- read.socrata("https://data.pr.gov/Permisos-y-Ambiente/Weather-Stations-Active-and-inactive-/9na3-9brj")
+
+
+# The following 3 lines of code will identify all PR stations
+#(stations <- ghcnd_stations())
+#who<-stations %>% filter(state == "PR") #who$id is station ids, who$elevation is elevation of stations, etc.
+#unique(who$id) #192 unique stations, the ones available at data.pr.gov
+
+niter <- nrow(station) #define object with number of stations
+
+#create generic zoo object to concatenate prcp data
+
+len_obj<-round(as.numeric(difftime(Sys.Date(),"1899-05-01")))
+
+allstations <- zoo(1:len_obj, seq(from = as.Date("1899-05-01"),
+    to = Sys.Date(), by = "1 day"))
+
+# the following loop extracts the rain data from each station from NOAA's ftp site
+# WARNING: loop may take a while to run
+for (i in 1:niter) {
+  
+    # To summarize monthly and annual rainfall at San Juan aiport, we obtain the daily data again but in a more convenient form  
+    dat<-meteo_tidy_ghcnd(stationid = station[i,1], var = "prcp")
+   dat$prcp<-dat$prcp/10 #change from tenths of a mm to mm
+   stationPRCP<-zoo(dat$prcp,dat$date) #create a type of object that represents a time series
+    
+
+    
+
+    if(i==1){#ifelse.zoo not working
+      allstations=stationPRCP
+      name1<-as.character(station[1,1]) #can't use colnames with one column so I just name this station right after loop
+      }else{
+      allstations=cbind(allstations,stationPRCP)
+      colnames(allstations)[i]<-as.character(station[i,1]) 
+      }
+      
+      remove(dat,stationPRCP)
+      print(i)
+    
+  }
+colnames(allstations)[1]<-name1 
+na_count <-sapply(allstations, function(y) sum(length(which(is.na(y))))) #NAs per station
+station_dat_count <- apply(allstations, 1, function(x) sum(!is.na(x))) #Number of stations with data per day
+zeroesperstation<-apply(X=allstations,2,FUN=function(x) length(which(x==0))) #how many zero daily mean/month prcp. If a region has many zeroes, mixture distribution may work best to model rain process
+
+allstations_m<-aggregate(allstations,as.Date(as.yearmon(time(allstations))), sum) #aggregate by month
+station_dat_count_m <- apply(allstations_m, 1, function(x) sum(!is.na(x))) #Number of stations with data per month
+par(mfrow=c(2,1)) #set two panel Graph window
+plot(zoo(station_dat_count,index(allstations)),ylab="# of stations without NA",xlab="Date",ylim=c(0,120))
+plot(zoo(station_dat_count_m,index(allstations_m)),ylab="# of stations without NA",xlab="Date",ylim=c(0,120))
+
+
+# Enough information on monthly totals is needed to estimate Standard Precipitation Index
+# (at least 30 yrs). Moreover, rain totals may change over time. Thus too long of a period may 
+# lead to misleading results. 
+# Based on plots above since 1955 there is consistently rainfall data## available for at least 80 stations
+# and at least 40 stations after 1980.
+allstations_m_sub<-window(allstations_m,start="1956-01-01",end="2015-12-31") # subset time period of interest
+
+#now check which stations have monthly totals for at least 75% of the months (45 years)
+ na_count_s<-sapply(allstations_m_sub, function(y) sum(length(which(is.na(y)))))
+ who<-which(na_count_s<0.25*nrow(allstations_m_sub)) #index of stations with 75% or more of monthly totals available
+ allstations_1956<-allstations_m_sub[,who] #choose the desired subset of stations
+
+ #library(ggmap)
+ # The next few lines will map the weather stations selected 
+ map <- get_map(location = c(Longitude = -66.45, Latitude = 18.25), zoom = 9)
+ subset_stat<-station[who,] #subset of stations to be used in this case study
+ mapPoints <- ggmap(map) +
+   geom_point(aes(x = Longitude, y = Latitude), size=3,data = subset_stat, alpha = .5,
+   color="red")+labs(x="Longitude", y="Latitude")
+   mapPoints #make map
+ 
+#The following section of code obtains the 3 month SPI
+spi3<-matrix(NA,nrow(allstations_1956),ncol(allstations_1956))
+#library(SCI)
+for(z in 1:ncol(allstations_1956)){
+spi.para3 <- fitSCI(allstations_1956[,z],first.mon=1,time.scale=3,distr="gamma",p0=TRUE)
+spi3[,z] <- transformSCI(allstations_1956[,z],first.mon=1,obj=spi.para3)}
+
+spi3<-zoo(spi3,index(allstations_1956)) 
+spi3_s<-spi3 #copy of spi3 to assign it different names (next line below)
+names(spi3_s)<-station[who,2]
+
+yy<-substring(index(spi3_s),1,4) #extract year of measurement
+mm<-substring(index(spi3_s),6,7)  #extract month of measurement
+spi3b<-data.frame(yy,mm,spi3_s)   # create data frame
+
+# To create the heatmaps we adapt the example found in https://benjaminlmoore.wordpress.com/2015/04/09/recreating-the-vaccination-heatmaps-in-r/
+ #library(reshape) #for melt
+
+ alls<-melt(spi3b,id=c("yy","mm"))#create a special data frame
+ 
+
+colnames(alls)[3] <- "station"
+alls$station<-substr(alls$station,1,12)
+alls$station<-gsub(" ", ".", alls$station, fixed = TRUE) #replace spaces in station names for .
+alls$station<-as.factor(alls$station) # make station factors
+alls$station <- factor(alls$station, levels=rev(levels(alls$station))) #sort station names 
+alls$yy=as.numeric(levels(alls$yy))[alls$yy]  #make year numeric
+
+#library(RColorBrewer)
+ cols <- brewer.pal(11, 'RdYlBu')#for color gradient to use in heatmap
+ #library(ggplot2) #necessary to make ggplot
+alls$monthyr<-as.yearmon(index(spi3),"%y-%m") #create mm-yr variable
+# run all lines below to create heatmap (until annotate command)
+ggplot(alls, aes(y=station, x=monthyr, fill=value)) +  
+  geom_tile(aes(linewidth=2), 
+            width=.9, height=.9) + 
+  theme_minimal() +
+    scale_fill_gradientn(colours=cols, limits=c(-2, 2),
+                        breaks=seq(-2, 2, by=1), 
+                        na.value=rgb(246, 246, 246, max=255),
+                        labels=c("-2", "-1","0","1","2"),
+                        guide=guide_colourbar(ticks=T, nbin=50,
+                               barheight=.5, label=T, 
+                               barwidth=10)) +
+  geom_segment(x=1967, xend=1967, y=0, yend=(ncol(allstations_1956)+.5), size=.9) +
+  geom_segment(x=1968, xend=1968, y=0, yend=(ncol(allstations_1956)+.5), size=.9) +
+  geom_segment(x=1994, xend=1994, y=0, yend=(ncol(allstations_1956)+.5), size=.9) +
+  geom_segment(x=1995, xend=1995, y=0, yend=(ncol(allstations_1956)+.5), size=.9) +
+  labs(x="", y="", fill="") +
+  ggtitle("3 month SPI") +
+  theme(legend.position=c(.5, -.1),
+        legend.direction="horizontal",
+        legend.text=element_text(colour="grey20"),
+        plot.margin=grid::unit(c(.5,.5,1.5,.5), "cm"),
+        axis.text.y=element_text(size=8, family="Helvetica", 
+                                 hjust=1),
+        axis.text.x=element_text(size=8,vjust=0),
+        axis.ticks.y=element_blank(),
+        panel.grid=element_blank(),
+        title=element_text(hjust=-.07, face="bold", vjust=1, 
+                           family="Helvetica"),
+        text=element_text(family="URWHelvetica"))+
+        annotate("text", label="Drought of 67", x=1967, y=(ncol(allstations_1956)+2), 
+           vjust=1, hjust=0, size=I(3), family="Helvetica")+
+           annotate("text", label="Drought of 94", x=1994, y=(ncol(allstations_1956)+2), 
+           vjust=1, hjust=0, size=I(3), family="Helvetica")
+           
+           
+# To create yearly average 3 month spi version of heatmap we do the following (until annotate command)
+alls_spi <- alls %>% group_by(station, yy) %>% 
+       summarise(rain=if(all(is.na(value))) NA else
+                 mean(value, na.rm=T)) #to average 3month spi
+ 
+ 
+ 
+ ggplot(alls_spi, aes(y=station, x=yy, fill=rain)) + 
+  geom_tile(colour="white", aes(linewidth=2), 
+            width=.9, height=.9) + theme_minimal() +
+    scale_fill_gradientn(colours=cols, limits=c(-2, 2),
+                        breaks=seq(-2, 2, by=1), 
+                        na.value=rgb(246, 246, 246, max=255),
+                        labels=c("-2", "-1","0","1","2"),
+                        guide=guide_colourbar(ticks=T, nbin=50,
+                               barheight=.5, label=T, 
+                               barwidth=10)) +
+  scale_x_continuous(expand=c(0,0), breaks=seq(1950, 2010, by=10)) +
+  geom_segment(x=1967, xend=1967, y=0, yend=(ncol(allstations_1956)), size=.9) +
+  geom_segment(x=1994, xend=1994, y=0, yend=(ncol(allstations_1956)), size=.9) +
+  geom_segment(x=2015, xend=2015, y=0, yend=(ncol(allstations_1956)), size=.9) +
+  labs(x="", y="", fill="") +
+  ggtitle("Mean 3 month SPI by year") +
+  theme(legend.position=c(.5, -.13),
+        legend.direction="horizontal",
+        legend.text=element_text(colour="grey20"),
+        plot.margin=grid::unit(c(.5,.5,1.5,.5), "cm"),
+        axis.text.y=element_text(size=8, family="Helvetica", 
+                                 hjust=1),
+        axis.text.x=element_text(size=8),
+        axis.ticks.y=element_blank(),
+        panel.grid=element_blank(),
+        title=element_text(hjust=-.07, face="bold", vjust=1, 
+                           family="Helvetica"),
+        text=element_text(family="URWHelvetica"))+
+annotate("text", label="Drought of 67", x=1967, y=(ncol(allstations_1956)+2), 
+           vjust=1, hjust=0, size=I(3), family="Helvetica")+
+          annotate("text", label="Drought of 94", x=1994, y=(ncol(allstations_1956)+2), 
+           vjust=1, hjust=0, size=I(3), family="Helvetica")#+
+           #annotate("text", label="Drought of 15", x=2015, y=(ncol(allstations_1956)+2), 
+           #vjust=1, hjust=0, size=I(3), family="Helvetica") 
+            
