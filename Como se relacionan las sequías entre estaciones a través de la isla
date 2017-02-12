@@ -34,7 +34,7 @@ ipak(packages) #install required packages
 options(noaakey="INSERT KEY WITHIN THESE QUOTES") #Enter your own NOAA key to the right
 
 # next, get station info
-station <- read.socrata("https://data.pr.gov/Permisos-y-Ambiente/Weather-Stations-Active-and-inactive-/9na3-9brj")
+station <- read.socrata("https://data.pr.gov/Permisos-y-Ambiente/Weather-Stations-Active-and-inactive-/9na3-9brj",stringsAsFactors=T)
 
 
 # The following 3 lines of code will identify all PR stations
