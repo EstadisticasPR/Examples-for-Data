@@ -143,7 +143,7 @@ ui = fluidPage( # Crea un diseño de filas y columnas, estoy es para organizar n
   )
 )
 
-d.tren <- read.socrata("https://www.indicadores.pr/dataset/N-mero-de-pasajeros-del-Tren-Urbano-Patrocinio-Tre/yvww-vrxd") # Baja la base de datos al programa.
+d.tren <- read.socrata("https://www.indicadores.pr/dataset/N-mero-de-pasajeros-del-Tren-Urbano-Patrocinio-Tre/yvww-vrxd",stringsAsFactors=T) # Baja la base de datos al programa.
 names(d.tren)[1] <- "Fecha" # Sustituye el nombre de la primera columna de la base de datos por Fecha.
 
 nyr <- as.character(d.tren$Fecha, format = "%Y") # Divide las fechas por año.
