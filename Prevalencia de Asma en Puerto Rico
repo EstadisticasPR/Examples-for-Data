@@ -24,7 +24,7 @@ ipak <- function(pkg){
 packages <- c("RSocrata") # este paquete se usa para cargar la data de data.pr.gov al programa R
 ipak(packages) #instala o activa paquetes necesarios
 
-data <- read.socrata("https://data.pr.gov/Salud/BRFSS-2012-Asthma/932y-rwhp") # Carga la data de asma directamente del portal.
+data <- read.socrata("https://data.pr.gov/Salud/BRFSS-2012-Asthma/932y-rwhp",stringsAsFactors=T) # Carga la data de asma directamente del portal.
 
 # Variables de interés para este ejemplo en la base de datos:
 # Asma = respuesta a pregunta de si tiene asma o no
