@@ -23,7 +23,7 @@ ipak <- function(pkg){
 packages <- c("ggplot2","RSocrata") # Cargar las librerias necesarias al programa R.
 ipak(packages) # Instala o activa paquete necesario.
 
-index <- read.socrata("https://data.pr.gov/Abierto/Socioeconomic-Index/i7sk-f8nr") # Descarga la data al programa.
+index <- read.socrata("https://data.pr.gov/Abierto/Socioeconomic-Index/i7sk-f8nr",stringsAsFactors=T) # Descarga la data al programa.
 
 # Creamos una gráfica de disperción
 ggplot(index, aes(x=index$Industrial.Index, y=index$Socioeconomic.Index)) + 
