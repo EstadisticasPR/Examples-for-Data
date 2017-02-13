@@ -25,7 +25,7 @@ ipak <- function(pkg){
 packages <- c("tm", "wordcloud", "SnowballC","dplyr", "RSocrata")
 ipak(packages)
 
-data <- read.socrata("https://data.pr.gov/Educaci-n/Incidentes-disciplinarios-en-las-escuelas-p-blicas/77su-6a3e") # Carga los datos de donaciones directamente del portal.
+data <- read.socrata("https://data.pr.gov/Educaci-n/Incidentes-disciplinarios-en-las-escuelas-p-blicas/77su-6a3e",stringsAsFactors=T) # Carga los datos de donaciones directamente del portal.
 incident <- data[,6] # Crea un vector con los incidentes reportados
 
 # Hacemos una limpieza de los datos:
