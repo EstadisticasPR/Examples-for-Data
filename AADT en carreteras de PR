@@ -25,7 +25,7 @@ ipak <- function(pkg){
 packages <- c("RSocrata", "plyr", "rminer", "ggplot2", "dplyr", "leaflet", "yaml") # este paquete se usa para cargar los datos de data.pr.gov al programa R
 ipak(packages) #instala o activa paquetes necesarios
 
-data <- read.socrata("https://data.pr.gov/Transportaci-n/Annual-Average-Daily-Traffic-AADT-Transito-Promedi/7kaq-zyym") # Carga los datos de AADT directamente del portal.
+data <- read.socrata("https://data.pr.gov/Transportaci-n/Annual-Average-Daily-Traffic-AADT-Transito-Promedi/7kaq-zyym",stringsAsFactors=T) # Carga los datos de AADT directamente del portal.
 
 data$ANO = as.Date(data$ANO, format = "%m/%d/%Y") # Se cambia el formato de la variable ANO a formato de fecha
 data$ANO = format(data$ANO,format= "%Y")
