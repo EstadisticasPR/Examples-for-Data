@@ -31,7 +31,7 @@ ipak <- function(pkg){
 # Ahora verificamos si el paquete RSocrata está instalado en su máquina. Sino, ipak lo instala y hace disponible
 packages <- c("RSocrata") # este paquete se usa para cargar la data de data.pr.gov al programa R
 ipak(packages) #instala o activa paquetes necesarios
-data = read.socrata("https://data.pr.gov/Educaci-n/Tasas-de-graduaci-n-en-las-escuelas-superiores-p-b/aysg-wxf9") # Carga la data de tasas de graduación directamente del portal data.pr.gov.
+data = read.socrata("https://data.pr.gov/Educaci-n/Tasas-de-graduaci-n-en-las-escuelas-superiores-p-b/aysg-wxf9",stringsAsFactors=T) # Carga la data de tasas de graduación directamente del portal data.pr.gov.
 
 names(data)[c(1,4,9)] = c('Region','Codigo.Escuela', 'Tasa.de.Graduacion') # Cambia los nombres de 3 columnas
 data$Tasa.de.Graduacion = as.numeric(sub('%',"", data$Tasa.de.Graduacion)) # Elimina el símbolo de porcentaje y convierte la variable de las tasas de graduación a númerica 
