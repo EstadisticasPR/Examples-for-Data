@@ -1,0 +1,61 @@
+##############################################################################
+#  We used the analytical statistics free program R to find which 
+# political mayor candidates got the highest donations during 2013-2016. R or RStudio for windows can be downloaded here:
+# https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
+#  Note that in addition to the data about donations we need the population to calculate the donation index
+#  and make the comparisons between candidates
+#  This code ran in R 3.3.1 in January 30, 2017. In case of error, verify the version of your data  and R because some changes might had occured
+#  Created by: Angel G. Velázquez
+
+# NOTE: Each line that starts with "#" the program detects it as a comment
+
+# First we prepare the require tools to work in the example 
+
+# A function to install the required packages for this application is created. The function was provided at:
+# https://gist.github.com/stevenworthington/3178163
+
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# Now we verify if the package RSocrata is installed in your computer; if not, ipak installs it and makes it available
+packages <- ("data.table") # This package is used to uplaoad the data from data.pr.gov to R
+ipak(packages) # Installs or activates the needed packages.
+
+df<- fread("https://data.oce.gov.pr/api/views/kdwd-nb6g/rows.csv",data.table=FALSE) # Load the donation database
+
+demo=fread("https://www.indicadores.pr/api/views/5pce-675z/rows.csv",data.table=FALSE) # Load the demographic database to R  
+
+who <- agrep(pattern="Alcalde",df$Candidatura,ignore.case=T) # index to filter donations by mayor candidates
+
+alc <- df[who,] # Sub-Divide the database to only mayor candidates
+alc$Candidatura[agrep(pattern = "Willian Miranda", alc$Candidato, ignore.case = TRUE)] = "Alcalde de Caguas" # Correction to the database to Caguas's Mayor
+alc$Cantidad <- as.numeric(gsub('\\$', '', alc$Cantidad)) # Eliminates the dolar sign in the variable and changes the column to numeric format.
+alc$Fecha <- as.Date(alc$Fecha, format = "%m/%d/%Y") # Change the format of the column of dates
+alc <- subset(alc, alc$Fecha >= as.Date("2013-1-1") & alc$Fecha <= as.Date("2016-11-07")) # Select the donations between 2013-2016.
+
+# Creates a new database
+donaciones <- data.frame(Name = alc$Candidato, Category=factor(alc$Candidatura) 
+                         ,Frequency = alc$Cantidad)
+
+# Creates the sum of the donations for each candidate
+candidatos <- aggregate(donaciones$Frequency, by = list(Candidate = donaciones$Name, Municipality = donaciones$Category), FUN=sum) 
+
+candidatos_m <- candidatos[with(candidatos, order(-candidatos$x)), ] # Order the donation sums from highest to lowest.
+head(candidatos_m, n=11) # Print the top 11 mayor candidates with highest donations
+
+y2015<-which(demo[,1]==2015) # Select the population data of 2015
+demo.15 = data.frame(Municipality = rownames(t(demo[y2015,-1])), Pop = matrix(t(demo[y2015,-1]))) # Creates a vector with the town's population of 2015
+demo.15$Municipality = sub("\\.", " ", demo.15$Municipality) # Change the . by space in the name of the municipalities (towns). Ej. San.Juan to San Juan.
+candidatos$Municipality <- as.character(gsub('\\Alcalde de ', '', candidatos$Municipality)) # Eliminates "Alcalde de" to obtain only the name of the town for each candidate.
+
+df.dpp = merge(candidatos, demo.15 , by = 'Municipality') # Unite the databases of the population with the mayor candidate for each town.
+
+index = df.dpp$x/df.dpp$Pop # Divide the quantities of donations/population
+
+df.dpp = cbind(df.dpp,index) # Unite the index variable with the database df.dpp
+df.dpp <- df.dpp[with(df.dpp, order(-df.dpp$index)), ] # Order the donation rate by person highest to lowest
+head(df.dpp, n=10) # Print the first 10 donation rates by mayor candidate. 
