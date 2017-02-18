@@ -1,0 +1,68 @@
+##############################################################################
+# The free statistical analysis program R is used to evaluate the AADT (Annual Average
+# Daily Traffic) in a section of the PR-52 during the period 2002-2014 using available
+# data in the data.pr.gov portal.
+#
+# R or RStudio for windows can be downloaded here:
+# https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
+# This code ran in R 3.3.1 since December, 2016. In case of error, verify your version
+# of the data and R since some changes might had occured.
+#
+# Created by: Hilda I. Calderón
+
+# Note: Each line that starts with "#" the program detects it as a comment
+
+#First the required tools are prepared in order to work in the example
+
+
+# A function will be created to install the required packages for this application. The function was provided at: https://gist.github.com/stevenworthington/3178163
+
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# Now we verify if the package RSocrata is installed in your computer; if not, ipak will install it and make it available
+packages <- c("RSocrata", "plyr", "rminer", "ggplot2", "dplyr", "leaflet", "yaml") # This package is used to upload the data from data.pr.gov to R program.
+ipak(packages) #installs or makes active the necessary packages
+
+data <- read.socrata("https://data.pr.gov/Transportaci-n/Annual-Average-Daily-Traffic-AADT-Transito-Promedi/7kaq-zyym",stringsAsFactors=T) # Carga los datos de AADT directamente del portal.
+
+data$ANO = as.Date(data$ANO, format = "%m/%d/%Y") # It changes the variable format, ANO format to date format
+data$ANO = format(data$ANO,format= "%Y")
+data$ANO = as.factor(data$ANO) # Only the year of the date is selected and the variable structure is changed from 'character' to 'factor' 
+data$PR. = as.factor(data$PR.) #  The variable PR structure is changed from character to 'factor'.
+
+# We verify if duplicated exists, i.e., rows with the same information to all the variables.
+data.dup <- data[duplicated(data) | duplicated(data, fromLast = TRUE), ]
+View(data.dup[order(data.dup$DESCRIPCIÓN, data.dup$MUNICIPIO),c(1,2,6,7)]) # Shows where the duplicates occur 
+
+data <- data[!duplicated(data),]# Removing duplicates.
+
+carr = "52" # Select the road you want to evaluate
+data.carr <- data[data$PR.==carr,] # The rows that belong to the selected road are chosen
+table(data.carr$ANO) # Number of points by year to the road 
+ggplot(data.carr, aes(x=as.integer(as.character(ANO)), y=KM)) + 
+  geom_point()  + theme_bw() + scale_x_continuous(breaks=seq(2002, 2014, 2))# We can see that between km 52 and km 57 there is information for almost all the years except 2008 and 2011
+data.carr.seg <- data.carr[data.carr$KM<=57 & data.carr$KM>=52,] #  The information between km 52 and km 57 is selected
+table(data.carr.seg$ANO) #  Number of points by year for the segment or road 
+
+#  Localization map for the km 52 and km 57 in the PR-52.
+m <- leaflet() %>%
+  addTiles() %>%
+  addMarkers(lng=c(-66.2399770, -66.2149805), lat=c(18.0402770,18.0510969)) %>%
+  addPopups(lng=c(-66.2399770, -66.2149805), lat=c(18.0402770,18.0510969),c("PR-52 Km 57","PR-52 Km 52"))
+m  # Print the map 
+
+# An AADT graphic for the road segment is created.
+data.carr.seg$ANO = as.integer(as.character(data.carr.seg$ANO)) # Change the structure of the variable 'year' to 'integer'
+data.carr.seg$grp = ifelse(data.carr.seg$ANO<2008,  "a", ifelse(data.carr.seg$ANO<2011 & data.carr.seg$ANO>2008, "b", "c") ) # Creates a vector of grouping to create a gap in the missing years: 2008 and 2011.
+
+# AADT Graphic for the period 2002-2014
+ggplot(data.carr.seg, aes(x=as.integer(as.character(ANO)), y=AADT)) + 
+    geom_point() + theme_bw() + xlab("AÑO") + 
+    scale_x_continuous(breaks=seq(2002, 2014, 2)) + 
+    geom_line(aes(group=grp))+  
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
