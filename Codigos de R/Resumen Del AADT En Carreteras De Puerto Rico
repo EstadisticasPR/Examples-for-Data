@@ -1,0 +1,76 @@
+##############################################################################
+# Se utiliza el programa gratuito de análisis estadístico llamado R para 
+# observar el AADT (Annual Average Daily Traffic) en un tramo de la PR-52 en 
+# el periodo 2002-2014 usando la data disponible en el portal data.pr.gov.
+#
+# R o RStudio para Windows se puden bajar en 
+# https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
+# Este código corre en R 3.3.1 desde diciembre, 2016. En caso de error,
+# verifique su versión de la data y de R ya que cambios pudieron haber occurido.
+# Creado por: Hilda Calderón
+
+# NOTA: Cada línea que empieza con "#" el programa lo detecta como un comentario.
+
+# Primero se preparan las herramientas necesarias para trabajar en el ejemplo.
+
+# Se creará una función para instalar paquetes necesarios para esta aplicación. Función provista en https://gist.github.com/stevenworthington/3178163
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# Ahora verificamos si el paquete RSocrata está instalado en su máquina. Sino, ipak lo instala y hace disponible
+packages <- c("RSocrata", "plyr", "ggplot2", "rminer") # este paquete se usa para cargar la data de data.pr.gov al programa R
+ipak(packages) #instala o activa paquetes necesarios
+
+data <- read.socrata("https://data.pr.gov/Transportaci-n/Annual-Average-Daily-Traffic-AADT-Transito-Promedi/7kaq-zyym", stringsAsFactors = T) # Carga la data de AADT directamente del portal.
+
+# Hacemos unos cambios a los datos
+data$Year = as.Date(data$ANO, format = "%m/%d/%Y")
+data$Year = format(data$Year,format= "%Y")
+data$PR. = as.factor(data$PR.)
+data$Year = as.factor(data$Year)
+
+# En la data se observan duplicados, es decir, filas con exactamente la misma información para todas las variables.
+data.dup <- data[duplicated(data) | duplicated(data, fromLast = TRUE), ]
+View((data.dup[order(data.dup$DESCRIPCIÓN, data.dup$MUNICIPIO),]))
+
+data <- data[!duplicated(data),]# Removiendo duplicados
+
+# Escogemos la carretera que queremos observar
+carr = "2"
+data.carr <- data[data$PR.==carr, ]
+table(data.carr$Year) # Número de puntos por año para la carretera que se esta observando
+ggplot(data.carr, aes(x=Year, y=KM)) + geom_point() + theme_bw()
+
+#Veamos otra carretera
+carr1 = "22"
+
+data.carr1 <- data[data$PR.==carr1,]
+ggplot(data.carr1, aes(x=Year, y=KM)) + geom_point() + theme_bw()# + scale_y_continuous(breaks=seq(0,250, by=40)) + geom_hline(yintercept = c(30,50), color='red')
+
+# Escogemos el tramo de 20 km que se quiere observar para la carretera PR-2
+km = 40
+data.carr.seg <- data.carr[data.carr$KM<=km + 10 & data.carr$KM>=km - 10,]
+table(data.carr.seg$Year) # Número de puntos por año para el tramo que se esta observando
+
+# Agrupamos la información de AADT para los periodos 2002-2004 y 2012-2014 y hacemos un resumen del AADT para ese tramo
+data.carr.seg$Year=delevels(data.carr.seg$Year, c("2002", "2003", "2004"), "02-04")
+data.carr.seg$Year=delevels(data.carr.seg$Year, c("2012", "2013", "2014"), "12-14")
+data.carr.seg = subset(data.carr.seg, Year=="02-04" | Year== "12-14")
+colnames(data.carr.seg)[6] = "Periodo"
+sum.data <- ddply(data.carr.seg, c("Periodo"), summarise,
+               N    = length(AADT/1000),
+               media = mean(AADT/1000),
+               mediana = median(AADT/1000),
+               min = min(AADT/1000),
+               max = max(AADT/1000),
+               sd = sd(AADT/1000)
+               )
+
+
+
+
+
