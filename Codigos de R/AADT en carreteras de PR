@@ -22,7 +22,7 @@ ipak <- function(pkg){
 }
 
 # Ahora verificamos si el paquete RSocrata está instalado en su máquina. Sino, ipak lo instala y hace disponible
-packages <- c("RSocrata", "plyr", "rminer", "ggplot2", "dplyr", "leaflet", "yaml") # este paquete se usa para cargar los datos de data.pr.gov al programa R
+packages <- c("RSocrata", "ggplot2", "dplyr", "leaflet") # este paquete se usa para cargar los datos de data.pr.gov al programa R
 ipak(packages) #instala o activa paquetes necesarios
 
 data <- read.socrata("https://data.pr.gov/Transportaci-n/Annual-Average-Daily-Traffic-AADT-Transito-Promedi/7kaq-zyym",stringsAsFactors=T) # Carga los datos de AADT directamente del portal.
