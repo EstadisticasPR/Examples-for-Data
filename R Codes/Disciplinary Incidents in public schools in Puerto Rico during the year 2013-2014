@@ -1,0 +1,40 @@
+##############################################################################
+# The open source software R is used to 
+# analyze the frequency of different disciplinary incidents reported in  
+# the public schools of Puerto Rico for the year 2013-2014
+# using the available data at data.pr.gov and a word cloud as a visual tool 
+# 
+#
+# R or RStudio for Windows can be downloaded from 
+# https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
+# This code runs in R 3.3.1 since December, 2016. In case of error,
+# verify your version of the data R, or packages since posible changes might have occured.
+# Created by: Hilda Calderón
+
+# NOTE: Each line that starts with "#" the program detects as a comment
+
+# First, the required tools are prepared to work in the case study
+
+# A function will be created to install or load required packages for this application. The provided function is from: https://gist.github.com/stevenworthington/3178163
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+packages <- c("tm", "wordcloud", "SnowballC","dplyr", "RSocrata")
+ipak(packages) # install or load needed packages
+
+data <- read.socrata("https://data.pr.gov/Educaci-n/Incidentes-disciplinarios-en-las-escuelas-p-blicas/77su-6a3e",stringsAsFactors=T) # Load the data directly from the portal
+incident <- data[,6] # Creates a vector of the reported incidents
+
+#We "clean the data"
+levels(incident) #List the types of reported incidents
+levels(incident)[agrep("bravucones",levels(incident))] = "Bullying" # Change the level"Bravucones/\"Bullying\"" to "Bullying"
+levels(incident)[agrep("truancy",levels(incident))] = "Truancy" # Change the level "Patrón de ausencias injustificadas/\"truancy\"" to "Truancy"
+
+dataCorpus <- Corpus(VectorSource(incident)) # Creates an object Corpus
+dataCorpus <- tm_map(dataCorpus, removeWords, stopwords('spanish')) # Removed common words as "del", "que"
+dataCorpus <- tm_map(dataCorpus, removePunctuation) # Removes punctuation signs
+
+wordcloud(dataCorpus, max.words = 200, random.order = FALSE, colors=brewer.pal(12,"Paired"), use.r.layout=FALSE, scale=c(3, .5)) # Creates the worldcloud.
