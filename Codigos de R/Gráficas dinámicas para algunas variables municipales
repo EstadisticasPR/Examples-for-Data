@@ -1,0 +1,154 @@
+##############################################################################
+# Se utiliza el programa gratuito de análisis estadístico llamado R para crear
+# un gráfico dinámico o 'motion chart' para explorar varios indicadores,
+# como tasa de desempleo promedio, tasa de participantes del seguro
+# social, tasa de féminas participantes del seguro social y  tasa de personas
+# en el grupo trabajador, a través del tiempo. 
+#
+# R o RStudio para Windows se puden bajar en 
+# https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
+# Este código corre en R 3.3.2 desde febrero, 2017. En caso de error,
+# verifique su versión de la data y de R ya que cambios pudieron haber occurido.
+# Creado por: Hilda Calderón, hilda.calderon@upr.edu
+
+# NOTA: Cada línea que empieza con "#" el programa lo detecta como un comentario.
+
+# Primero se preparan las herramientas necesarias para trabajar en el ejemplo.
+
+# Se creará una función para instalar paquetes necesarios para esta aplicación. Función provista en https://gist.github.com/stevenworthington/3178163
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# Ahora verificamos si los paquetes necesarios están instalados en su máquina. Sino, ipak los instala y hace disponibles
+packages <- c("RSocrata", "googleVis", "reshape2") # este paquete se usa para cargar la data de data.pr.gov al programa R
+ipak(packages) #instala o activa paquetes necesarios
+
+# Obtenemos los datos directamente de indicadores.pr
+dat.1 <- read.socrata("https://www.indicadores.pr/Government/N-mero-de-ni-os-sobrevivientes-beneficiarios-de-se/5yhf-2egi", stringsAsFactors = T)
+dat.1$Year = format(as.Date(dat.1$Year), "%Y")
+dat.2 <- read.socrata("https://www.indicadores.pr/Government/N-mero-de-viudos-y-padres-sobrevivientes-beneficia/rj43-ytmt", stringsAsFactors = T)
+dat.2$Year = format(as.Date(dat.2$Year), "%Y")
+dat.3 <- read.socrata("https://www.indicadores.pr/Government/N-mero-de-hijos-de-trabajadores-retirados-benefici/26p2-g3bd", stringsAsFactors = T)
+dat.3$Year = format(as.Date(dat.3$Year), "%Y")
+dat.4 <- read.socrata("https://www.indicadores.pr/Government/N-mero-de-trabajadores-retirados-beneficiarios-de-/73y2-kmzc", stringsAsFactors = T)
+dat.4$Year = format(as.Date(dat.4$Year), "%Y")
+dat.5 <- read.socrata("https://www.indicadores.pr/Government/N-mero-de-beneficiarios-de-seguro-social-por-munic/7aas-vcr9", stringsAsFactors = T)
+dat.5$Year = format(as.Date(dat.5$Year), "%Y")
+dat.6 <- read.socrata("https://www.indicadores.pr/Government/N-mero-de-c-nyugues-de-trabajadores-retirados-bene/ms82-wfq9", stringsAsFactors = T)
+dat.6$Year = format(as.Date(dat.6$Year), "%Y")
+dat.7 <- read.socrata("https://www.indicadores.pr/Government/N-mero-de-ni-os-de-trabajadores-incapacitados-bene/kta6-8gvc", stringsAsFactors = T)
+dat.7$Year = format(as.Date(as.character(dat.7$Year), format="%Y"), "%Y")
+#dat.7$Year = as.Date(paste(as.character(dat.7$Year),"01", "01", sep="-"), format = "%Y-%m-%d")
+dat.8 <- read.socrata("https://www.indicadores.pr/Government/N-mero-de-hombres-de-65-a-os-o-mas-beneficiarios-d/etue-q6i2", stringsAsFactors = T)
+dat.8$Year = format(as.Date(as.character(dat.8$Year), format="%Y"), "%Y")
+#dat.8$Year = as.Date(paste(as.character(dat.8$Year),"01", "01", sep="-"), format = "%Y-%m-%d")
+dat.9 <- read.socrata("https://www.indicadores.pr/Government/N-mero-de-feminas-de-65-a-os-o-mas-beneficiarias-d/6k4g-vq5s", stringsAsFactors = T)
+dat.9$Year = format(as.Date(as.character(dat.9$Year), format="%Y"), "%Y")
+#dat.9$Year = as.Date(paste(as.character(dat.9$Year),"01", "01", sep="-"), format = "%Y-%m-%d")
+dat.10 <- read.socrata("https://www.indicadores.pr/Personal/N-mero-de-Personas-en-Grupo-Trabajador-por-Municip/7dqu-bnch", stringsAsFactors = T)
+dat.10 = dat.10[,c(1,4:81)]
+dat.10$Month = format(as.Date(dat.10$Month), format="%Y")
+dat.10 = aggregate(. ~ Month, data = dat.10, FUN = mean) # Calcula el promedio anual
+names(dat.10)[names(dat.10)=="Month"]="Year"
+#dat.10$Year = as.Date(paste(dat.10$Month,"01", "01", sep="-"), format="%Y-%m-%d")
+names(dat.10) = gsub(".NSA", "", names(dat.10))
+names(dat.10)[names(dat.10)=="Manat"] = "Manati"
+dat.11 <- read.socrata("https://www.indicadores.pr/Personal/Tasa-de-Desempleo-por-Municipio-o-Area-Unemploymen/xxdd-cq6g", stringsAsFactors = T)
+dat.11 = dat.11[,c(1,4:81)]
+dat.11$Month = format(as.Date(dat.11$Month), format="%Y")
+dat.11[, 2:ncol(dat.11)] = apply(dat.11[, 2:ncol(dat.11)], MARGIN = 2, function(x) as.numeric(gsub("%", "", x)))
+dat.11 = aggregate(. ~ Month, data = dat.11, FUN = mean) # Calcula el promedio anual
+names(dat.11)[names(dat.11)=="Month"]="Year"
+#dat.11$Year = as.Date(paste(dat.11$Month,"01", "01", sep="-"), format="%Y-%m-%d")
+names(dat.11) = gsub(".NSA", "", names(dat.11))
+names(dat.11)[names(dat.11)=="Manat"] = "Manati"
+
+# Obtenemos los datos de la población anual por municipio 
+pob <- read.socrata("https://www.indicadores.pr/Demographics/Estimados-anuales-poblacionales-por-municipio-y-Pu/8ey7-awsw", stringsAsFactors = T)
+
+pob$Year = as.character(pob$Año)
+
+# Cambiaremos algunos caracteres especiales en algunas de las bases de datos
+old = c("ñ", "á", "é", "í", "ó", "ú", "ü")
+new = c("n", "a", "e", "i", "o", "u", "u")
+for (i in 1:length(old)){
+names(pob) = gsub(old[i], new[i], names(pob))
+names(dat.10) = gsub(old[i], new[i], names(dat.10))
+names(dat.11) = gsub(old[i], new[i], names(dat.11))
+}
+
+# Cambiamos el formato de las bases a formato largo para poder usar algunas
+# funciones de R
+
+vars = c("Poblacion", 
+         "Tasa de ni~os sobrevivientes participantes del Seguro Social",
+         "Tasa de viudos y padres sobrevivientes participantes del Seguro Social",
+         "Tasa de hijos de trabajadores retirados participantes del Seguro Social",
+         "Tase de trabajadores retirados participantes del Seguro Social",
+         "Tasa de participantes del Seguro Social",
+         "Tasa de conyugues de trabajadores retirados participantes del Seguro Social",
+         "Tasa de ni~os de trabajadores incapacitados participantes del Seguro Social",
+         "Tasa de hombres de 65 a~os o mas participantes del Seguro Social",
+         "Tasa de feminas de 65 anos o mas participantes del Seguro Social",
+         "Tasa promedio de personas en el grupo trabajador",
+         "Tasa promedio de desempleo")
+
+pob_long = melt(pob, id.vars=c("Year"), 
+                 measure.vars = names(pob)[!names(pob) %in% c('Ano',"Year", 'Puerto.Rico', "Month")], value.name = vars[1])
+dat.1_long = melt(dat.1, id.vars=c("Year"),
+                  measure.vars = names(dat.1)[!names(dat.1) %in% c('Ano',"Year", 'Puerto.Rico', "Month")], value.name = vars[2])
+dat.2_long = melt(dat.2, id.vars=c("Year"),
+                  measure.vars = names(dat.2)[!names(dat.2) %in% c('Ano',"Year", 'Puerto.Rico', "Month")], value.name = vars[3])
+dat.3_long = melt(dat.3, id.vars=c("Year"),
+                  measure.vars = names(dat.3)[!names(dat.3) %in% c('Ano',"Year", 'Puerto.Rico', "Month")], value.name = vars[4])
+dat.4_long = melt(dat.4, id.vars=c("Year"),
+                  measure.vars = names(dat.4)[!names(dat.4) %in% c('Ano',"Year", 'Puerto.Rico', "Month")], value.name = vars[5])
+dat.5_long = melt(dat.5, id.vars=c("Year"),
+                  measure.vars = names(dat.5)[!names(dat.5) %in% c('Ano',"Year", 'Puerto.Rico', "Month")], value.name = vars[6])
+dat.6_long = melt(dat.6, id.vars=c("Year"),
+                  measure.vars = names(dat.6)[!names(dat.6) %in% c('Ano',"Year", 'Puerto.Rico', "Month")], value.name = vars[7])
+dat.7_long = melt(dat.7, id.vars=c("Year"),
+                  measure.vars = names(dat.7)[!names(dat.7) %in% c('Ano',"Year", 'Puerto.Rico', "Month")], value.name = vars[8])
+dat.8_long = melt(dat.8, id.vars=c("Year"),
+                  measure.vars = names(dat.8)[!names(dat.8) %in% c('Ano',"Year", 'Puerto.Rico', "Month")], value.name = vars[9])
+dat.9_long = melt(dat.9, id.vars=c("Year"),
+                  measure.vars = names(dat.9)[!names(dat.9) %in% c('Ano',"Year", 'Puerto.Rico', "Month")], value.name = vars[10])
+dat.10_long = melt(dat.10, id.vars=c("Year"),
+                  measure.vars = names(dat.10)[!names(dat.10) %in% c('Ano',"Year", 'Puerto.Rico', "Month")], value.name = vars[11])
+dat.11_long = melt(dat.11, id.vars=c("Year"),
+                  measure.vars = names(dat.11)[!names(dat.11) %in% c('Ano',"Year", 'Puerto.Rico', "Month")], value.name = vars[12])
+
+# Construiremos una base con una columna de Año, otra para el municipo y una 
+# para cada una de los indicadores disponbles.
+
+dat = merge(pob_long, dat.1_long, by=c("Year", "variable"))
+dat = merge(dat, dat.2_long, by=c("Year", "variable"))
+dat = merge(dat, dat.3_long, by=c("Year", "variable"))
+dat = merge(dat, dat.4_long, by=c("Year", "variable"))
+dat = merge(dat, dat.5_long, by=c("Year", "variable"))
+dat = merge(dat, dat.6_long, by=c("Year", "variable"))
+dat = merge(dat, dat.7_long, by=c("Year", "variable"))
+dat = merge(dat, dat.8_long, by=c("Year", "variable"))
+dat = merge(dat, dat.9_long, by=c("Year", "variable"))
+dat = merge(dat, dat.10_long, by=c("Year", "variable"))
+dat = merge(dat, dat.11_long, by=c("Year", "variable"))
+
+# Calculamos las tasas de las variables que fueron dadas como números 
+# dividiendo entre la población del municipio.
+dat.rate = dat[,4:(ncol(dat)-1)]/dat[,"Poblacion"]*100
+dat[,4:(ncol(dat)-1)] = dat.rate
+names(dat)[2] = 'Municipio'
+dat$municipio <- dat$Municipio # Esta variable se utiliza en la creación del motion chart
+dat$Year = as.numeric(dat$Year)
+
+#----------------------------------------
+
+# Crea el motion chart
+mc <- gvisMotionChart(dat, idvar="Municipio", timevar="Year", yvar = "Tasa promedio de desempleo", xvar="Tasa promedio de personas en el grupo trabajador", sizevar = "Poblacion", colorvar='municipio', options=list(width=1000, height=600))
+
+plot(mc) # exhibe el motion chart en su navegador
+
