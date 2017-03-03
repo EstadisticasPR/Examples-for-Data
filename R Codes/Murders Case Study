@@ -1,15 +1,19 @@
-# We used the free program of analytical statistics called R to obtain the murder rate in some 
-# regions of Puerto Rico. R o R Studio for Windows can be downloaded in
+##############################################################################
+# The open source software R is used to obtain the murder rate in some 
+# police districts in Puerto Rico. 
+
+# R o R Studio for Windows can be downloaded from
 # https://cran.r-project.org/bin/windows/base/ or https://www.rstudio.com/products/rstudio/download3/. 
-# Note that in addition to the criminality data we need the data for the police department 
-# population of Puerto Rico per region during those years for us to calculate the homicide statistics in Puerto Rico for 2015.
-# This code runs in R 3.3.1 since Auguts 31, 2016.In case of an error, check your version of the data and R since changes may have occurred.
+# Note that in addition to the crime data we need demographic 
+# data per district for us to calculate the murder statistics in Puerto Rico for 2015.
+# This code runs in R 3.3.1 since Auguts 31, 2016.In case of an error, 
+# verify your version of the data R, or packages since posible changes might have occured.
 
-# NOTE: Every line that begins with “#” the program detects it as a comment.
+# NOTE: Every line that begins with "#" the program detects it as a comment.
 
-# First, prepare the necessary tools to work on the example.
-# Create a function to install all packages that you need in the application. Function provided in
-# https://gist.github.com/stevenworthington/3178163
+# First, the required tools are prepared to work in the case study
+
+# A function will be created to install or load required packages for this application. The provided function is from: https://gist.github.com/stevenworthington/3178163
 ipak <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg)) 
@@ -18,13 +22,13 @@ ipak <- function(pkg){
 }
 
 packages<-"data.table"
-ipak(packages)
+ipak(packages) # install or load needed packages
 
-d.demo=fread("https://www.indicadores.pr/api/views/5pce-675z/rows.csv") # Upload the demographic data base to the R program.
-d.ic=fread("https://data.pr.gov/api/views/pzaz-tkx9/rows.csv") #Carga la base de datos de incidencia criminal al programa R.
+d.demo=fread("https://www.indicadores.pr/api/views/5pce-675z/rows.csv") # Upload the demographic database to R
+d.ic=fread("https://data.pr.gov/api/views/pzaz-tkx9/rows.csv") #Upload to R the crime data
 
-# With the “colnames” function we changed the name of each variable in the data base that we just 
-# uploaded. This is a very important step, since some of the characters do not upload as they should.
+# With the "colnames" function we changed the name of each variable in the database that we just 
+# uploaded. This is a necessary step, since some of the characters did not upload as they should.
 colnames(d.demo) <- c('Year',"Adjuntas","Aguada","Aguadilla","Aguas.Buenas","Aibonito","Anasco","Arecibo","Arroyo","Barceloneta","Barranquitas","Bayamon","Cabo.Rojo",
                       "Caguas","Camuy","Canovanas","Carolina","Catano","Cayey","Ceiba","Ciales","Cidra","Coamo","Comerio","Corozal","Culebra","Dorado","Fajardo",
                       "Florida", "Guanica","Guayama","Guayanilla","Guaynabo","Gurabo","Hatillo","Hormigueros","Humacao","Isabela","Jayuya","Juana.Diaz","Juncos",
@@ -34,45 +38,45 @@ colnames(d.demo) <- c('Year',"Adjuntas","Aguada","Aguadilla","Aguas.Buenas","Aib
 
 colnames(d.ic)<-c("Date","Hour","Number_Crime","Crime","X","Y","location","Area")
 
-df.by.year= split(d.demo,f=d.demo$Year) # Create a series of list which divide the data per year.
+df.by.year= split(d.demo,f=d.demo$Year) # Create a series of lists which divide the data per year.
 
-# To change the crime substitute one of following crimes:
+# The crimes available are:
 #   Murders = "Asesinato"                            Break-ins = "Escalamiento"
 #   Aggravated aggression = "Agresion Agravada"      Robbery = "Robo"
 #   Stolen vehicles = "Vehiculo Hurtado"             Rapes = "Violacion"
 #   Malicious fires = "Incendio Malicioso"           Illegal appropriation = "Apropiacion ilegal"
 #   Others = "Otros"
-         
-# For effects of this example we are going to calculate the murder rates from 2015.
-# To obtain the incidence rate for other crimes substitute the word “murder”.
+
+# For this case study we are going to calculate the murder rates for 2015.
+# To obtain the rate for other crimes substitute the word "Asesinato" below.
 x="Asesinato" # Set the crime.
 
-# To obtain the results for another year, substitute “2015” for 2012, 2013, or 2014on the following two lines.
+# To obtain the results for another year, substitute "2015" for 2012, 2013, or 2014 in the following two lines.
 y=2015 # Set the date.
-demo.y <- as.data.frame(df.by.year$`2015`) # Create a data base with the crimes for the selected year.
+demo.y <- as.data.frame(df.by.year$`2015`) # Create a database with the crimes for the selected year.
 
-# We let the program know that the first lines are dates (only to notify it that it is a date) regarding the crime which we want to analyze.
+# We define dates properly for R
 d.crime <- as.Date(d.ic$Date[agrep(pattern = x ,d.ic$Crime,ignore.case = TRUE)])
 
-# Turned the dates into a format that only contains years. 
+# Now turn the dates into a format that only contains years. 
 y.crime <- format(d.crime,format= "%Y")
 
-# Extracted the crimes and the police areas to create a smaller subset.
+# Extracted the crimes and the police areas to create a subset.
 cases <- d.ic$Crime[agrep(pattern = x ,d.ic$Crime,ignore.case=TRUE)]
 areas <- d.ic$Area[agrep(pattern = x , d.ic$Crime, ignore.case = TRUE)]
 
 # Created a subset of the data we want to analyze.
 ic.crime <-data.frame(Date=d.crime, Year=y.crime, Police.Area=areas, Crime=cases)
 
-# Divided the crimes per year.
+# Subset crimes for year of interest.
 crime.y <- subset(ic.crime, Year==y)
 
-# Calculated the crime incidences per area.
+# Calculated the crime rate per area.
 dy <- table(crime.y$Police.Area) # Create a table of the crimes in 2015.
 dy <- as.data.frame(dy) # Turn the table into a data base about crimes in 2015.
 
 
-# Now that the data is divided and organized, calculate the rate crime or the specific crime that you wish to study.
+# Now that the data is divided and organized, calculate the rate for the specific crime that you wish to study.
 # The generic formula is:
 #(región)(año)=d(año)$Freq[agrep(pattern = "(región)",dy$Var1)]/(sumatoria de los pueblos que conponen la región)*100000
 
@@ -86,12 +90,13 @@ fajardo.y <- dy$Freq[agrep(pattern = "Fajardo",dy$Var1)]/(demo.y$Fajardo+demo.y$
 ponce.y <- dy$Freq[agrep(pattern = "Ponce",dy$Var1)]/(demo.y$Yauco+demo.y$Juana.Diaz+demo.y$Santa.Isabel+demo.y$Villalba+demo.y$Penuelas+demo.y$Guayanilla+
                                                         demo.y$Guanica+demo.y$Ponce)*100000
 
-# We set all of the information in a data frame to help in the analysis.
+# We organize output into a dataframe
 d.region <- data.frame(San.Juan=san.juan.y,Mayaguez=mayaguez.y,Fajardo=fajardo.y,Ponce=ponce.y)
 d.region # Print the created data base
 
-# Search for the crime incidence in Puerto Rico
+
 ic.pr.y <- sum(dy$Freq)/demo.y$Total*100000 # Calculate the rate of Puerto Rico for the year 2015
-ic.pr.y # Print the incidence rate.
+ic.pr.y # Print the rate for all of Puerto Rico.
 
 # Created by: Angel Velazquez 
+
