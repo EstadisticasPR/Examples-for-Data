@@ -1,0 +1,33 @@
+##############################################################################
+# We used the free program of statistics analysis R. to compare the socialeconomic index and the industrial index
+# for each municipality in Puerto Rico . 
+# R or RStudio for windows can be downloaded at https://cran.r-project.org/bin/windows/base/ 
+# or https://www.rstudio.com/products/rstudio/download3/. This code runs in R 3.3.1 
+# since December 20, 2016. 
+# If an error shows while running this code, verify the version of your data, R, 
+# and necessary packages since changes in these may have occured.
+# Also keep in mind that access to the internet is required to extract the data
+
+#NOTE: Each line that starts with "#" the programs detects it as a comment 
+
+#First, we prepare the required tools to work with the case study.
+
+# A function will be created to install required packages for this application. The function is provided at: 
+# https://gist.github.com/stevenworthington/3178163
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# Now we verifiy if the packages are installed in your device. If not, ipak installs them and makes them available.
+packages <- c("ggplot2","RSocrata") #Load the required libraries for R
+ipak(packages) # Install or activate required packages
+
+index <- read.socrata("https://data.pr.gov/Abierto/Socioeconomic-Index/i7sk-f8nr") # bring data to R
+
+# We create a scatterplot
+ggplot(index, aes(x=index$Industrial.Index, y=index$Socioeconomic.Index)) + 
+  geom_point()+geom_smooth(method="lm",se=F)+theme_classic()+
+  xlab("Industrial Index") +ylab("Socioeconomic Index")
