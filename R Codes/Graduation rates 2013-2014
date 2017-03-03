@@ -1,0 +1,66 @@
+##############################################################################
+# The open source software R is used to answer the following questions
+# 1. Are graduation rates of public high schools different by gender?
+# 2. Are graduation rates of students below the poverty level different in some districts?
+# Data from portal.data.pr.gov is used; which contains the graduation rate
+# of public high schools of Puerto Rico during the academic year of 2013-14
+# 
+# R or RStudio can be downloaded from:
+# https://cran.r-project.org/bin/windows/base/ or https://www.rstudio.com/products/rstudio/download3/
+# This code runs in R 3.3.1 since October 30, 2016. In case of error,
+# verify your version of the data R, or packages since posible changes might have occured.
+# Created by: Hilda I. Calderón, hilda.calderon@upr.edu
+#
+
+# NOTE: Each line that starts with "#" R detects as a comment
+
+# First, we prepared the require tools to work in the case study
+
+# A function to install or load required packages for this application will be created. The function is provided at: https://gist.github.com/stevenworthington/3178163
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# Now we verify if the package RSocrata is installed in your device. If not, ipak installs it and makes it available
+packages <- c("RSocrata") # This package is used to load the data from data.pr.gov to R
+ipak(packages) #Install or activates required packages
+data = read.socrata("https://data.pr.gov/Educaci-n/Tasas-de-graduaci-n-en-las-escuelas-superiores-p-b/aysg-wxf9",stringsAsFactors=T) #Load the data of the graduation rates directly from data.pr.gov.
+
+names(data)[c(1,4,9)] = c('Region','Codigo.Escuela', 'Tasa.de.Graduacion') # Change the name of three columns (remove Spanish accents)
+data$Tasa.de.Graduacion = as.numeric(sub('%',"", data$Tasa.de.Graduacion)) # Delete the symbol of percentage (%) and convert the graduation rate variable to numeric 
+data = data[data$Total.en.el.Cohorte!=0,] # The schools with a cohort equal to zero are omitted.
+
+#-----------  Question 1 ----------
+
+data.genero = with(data, data[Sub.grupo%in%c('FEMENINO','MASCULINO'),]) # The rows of the appropiate subgroups by gender are selected
+data.genero = with(data.genero, data.genero[Codigo.Escuela%in%names(table(Codigo.Escuela)[table(Codigo.Escuela)==2]),]) # A school with 5 males and no females is deleted
+data.genero$Sub.grupo <- droplevels(data.genero$Sub.grupo) # subgroups that are not used in the analysis are deleted
+boxplot(Tasa.de.Graduacion~Sub.grupo, data.genero, ylab = 'Graduation Rate', yaxt="n", main = 'Graduation Rate by Gender') # A Boxplot of the graduation rate by gender
+axis(side=2, las = T, at = pretty(data.genero$Tasa.de.Graduacion), lab=paste0(pretty(data.genero$Tasa.de.Graduacion), "%")) # Place values in the vertical axis and add % symbol
+
+t = with(data.genero, t.test(Tasa.de.Graduacion[Sub.grupo == 'FEMENINO'], Tasa.de.Graduacion[Sub.grupo == 'MASCULINO'], paired = T)) #  t test to verify if the graduation rates differ by gender
+
+#--------- Question 2 --------------
+
+distritos = c('BARRANQUITAS', 'CIDRA', 'SAN JUAN II') # Three districts that we wish to compare are selected
+
+data.dist = data[data$Distrito%in%distritos, ] # The rates of the schools in those three districts are selected
+
+data.pobreza = data.dist[data.dist$Sub.grupo=='POR DEBAJO DEL NIVEL DE POBREZA', ]# Rows corresponding to the rates for the subgroup of students below the poverty level are selected
+data.pobreza = data.pobreza[data.pobreza$Tasa.de.Graduacion!=0,] # Schools with graduation rate equal to zero are deleted
+data.pobreza$Distrito=droplevels(data.pobreza$Distrito) # The districts that are not used in the analysis are deleted
+
+boxplot(Tasa.de.Graduacion~Distrito, data.pobreza, ylab = 'Graduation Rate', yaxt="n", main = 'Graduation Rate by District',cex.axis=0.75) #Boxplot of the graduation rate by district for the students below the poverty level.
+axis(side=2, las = T, at = pretty(data.pobreza$Tasa.de.Graduacion), lab=paste0(pretty(data.pobreza$Tasa.de.Graduacion), "%")) # Values of the vertical axis are placed and the % symbol is added 
+
+a = aov(Tasa.de.Graduacion~Distrito, data = data.pobreza) # The Analysis of Variance (ANOVA) will be done to determine if we have some significance difference in the graduation rates by districts.
+summary(a)
+
+TukeyHSD(a, "Distrito", ordered = TRUE) # The test of multiple comparison to determine the districts with different graduation rates
+
+op = par(oma=c(0,5,0,0)) # The margins of the plotting area are modified
+plot(TukeyHSD(a, "Distrito", ordered = TRUE),las = T, cex.axis=.7) # A plot of the previous test is done in order to visualize the districts with different rates. If the interval includes zero, it means that there is no significant difference between those two districts.
+par(op)
