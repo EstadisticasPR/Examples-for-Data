@@ -1,0 +1,50 @@
+##############################################################################
+# The open source software R is used to obtain
+# the percentage of people that have asthma by gender and by the category of
+# age using the data from data.pr.gov which contains information of the  
+# 'Behavioral Risk Factor Surveillance System' (BFRSS) survey for the year 2012.
+# R or RStudio can be downloaded from:
+# https://cran.r-project.org/bin/windows/base/ or https://www.rstudio.com/products/rstudio/download3/
+# This code runs in R 3.3.1 since October 30, 2016, In case of error,
+# verify your version of the data R, or packages since posible changes might have occured.
+
+# NOTE: Each line that starts with "#" R detects as a comment
+
+# First, the required tools are prepared to work in the case study.
+
+# A function to install or load required packages for this application will be created. The function is provided at: https://gist.github.com/stevenworthington/3178163
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# Now we verify if the package RSocrata is installed in your device. If not, ipak installs it and makes it available
+packages <- c("RSocrata") # This package is used to load the data from data.pr.gov to R
+ipak(packages) #Install or activate the required tools
+
+data <- read.socrata("https://data.pr.gov/Salud/BRFSS-2012-Asthma/932y-rwhp",stringsAsFactors=T) # Load the data of asthma directly from the portal.
+
+# Variables of interest for this example in the database
+# Asma = Answers to question if person has or not current asthma
+# EDAD = Category by age 
+# SEXO = Gender reponse
+# Other variables: Education, income, civil status, if smoke or not, health region and Body Mass.
+
+# A change to the original data is needed
+levels(data$EDAD)[6] <- "65>" #  Change the category of age of 65< to 65>
+
+
+summary(data$Asma) # Observe that we do not have the information of asthma for 10 respondents.
+
+data <- data[data$Asma!='#N/A',] # The respondents that do not have information of asthma are deleted.
+data$Asma = droplevels(data$Asma) # Delete the level #N/A of the variable "asma".
+
+tab = with(data, table(EDAD, SEXO, Asma)) # summarize current asthma data, by sex or by age.
+ftable(tab) # Print the previous frequency table but more organized.
+tab = addmargins(tab) # The marginal frequency by age and by sex of the respondent is added. Furthermore, the frequencies for all the respondent by age and sex and the marginals are obtained
+prev = tab[,,"Yes"]/tab[,,'Sum']*100 # Calculates the prevalence (in percentage) of current asthma of the repondent by age and sex.
+rownames(prev)[nrow(prev)]<-colnames(prev)[ncol(prev)] <- "Total" # Assigns the name 'Total' to the row and column of the marginal percentages.
+prev <- round(prev,2) # The percentage in decimals is obtained.
+prev # Print the table of prevalence (in percentages).
