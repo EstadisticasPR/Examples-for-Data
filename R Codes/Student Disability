@@ -1,0 +1,39 @@
+##############################################################################
+# The open source software R is used to compare
+# the rate of disabilities attended in special needs programs in Puerto Rico. R or RStudio for Windows can be downloaded in 
+# https://cran.r-project.org/bin/windows/base/ or https://www.rstudio.com/products/rstudio/download3/
+# This code runs in R 3.3.1 since November 17, 2016 In case of error,
+# verify your version of the data R, or packages since posible changes might have occured.
+
+#NOTE: Each line that starts with "#" R detects it as a comment
+
+# First we prepare the required tools to work in the case study
+
+# A function to install or load required packages for this application will be created. The function is provided at: https://gist.github.com/stevenworthington/3178163
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# Now we verify if the package RSocrata is installed in your device. If not, ipak install it and makes it available.
+packages <- "RSocrata" #This package is used to load the data from data.pr.gov to R
+ipak(packages) #Install or activate required packages
+
+data <- read.socrata("https://data.pr.gov/Educaci-n/Estudiantes-servicos-con-Impedimentos-del-2011-al-/qgn3-ejjb",stringsAsFactors=T) # We load the data from internet to R
+data<-data[which(data$AÑO.ESCOLAR=="01/01/2012 12:00:00 AM"),] #Selects the year 2012
+
+totals <- colSums(data[3:15], na.rm = TRUE) # With the colSums sums is done by column (by each disability)
+sumtotals<-sum(totals) # Total disabilities in the scholar period.
+
+# Creates a variable with the abreviation of each disability
+abr <- c("AUT", "TRAU_CEL", "DIS_EMO", "IMP_MUL", "IMP_VIS", "OTROS", "AUD", "HAB&LENG", "APREN", "ORT",  "DEF_INTL", "RETR_INTL", "SOR_CIEGO")
+
+rate <- round(totals/sumtotals*10000, digits = 2) # Calculates the number of disabilities per 10,000 students
+
+# A bar plot is created
+bp <- barplot(rate, las = 2, main = "Disability rates during 2011-2012",names.arg = abr, ylim=c(0,5000),cex.names = .75,
+              col = "gray",ylab = "Disability Rate")
+legend("topleft", ncol=3, "Values per 10,000 students with disabilities",cex=0.6,bty="n") # Creates a legend 
+text(bp, rate+100, rate, cex=.75, adj = .6) # Add the exact rate at the top of each bar plot.
