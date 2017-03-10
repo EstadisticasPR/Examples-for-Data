@@ -1,5 +1,5 @@
 ##############################################################################
-# We used the free statistical analysis program R to compare the average IGS of different high schools in Puerto Rico. R or RStudio for windows can be
+# The open source program R was used to compare the average IGS of different high schools in Puerto Rico. R or RStudio for windows can be
 # downloaded at: https://cran.r-project.org/bin/windows/base/ or https://www.rstudio.com/products/rstudio/download3/
 #This code can run in R 3.3.1 since October 28, 2016. In case of an error, verify if the version of the data and R because some changes might had occured.
 
