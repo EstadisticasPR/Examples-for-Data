@@ -26,14 +26,17 @@ ipak(packages) #Install or activate the required tools
 
 data <- read.socrata("https://data.pr.gov/Salud/BRFSS-2012-Asthma/932y-rwhp",stringsAsFactors=T) # Load the data of asthma directly from the portal.
 
+colnames(data)[3] <- "AGE" #Translate "EDAD" to english
+colnames(data)[4] <- "SEX" #Translate "SEXO" to english
+
 # Variables of interest for this example in the database
 # Asma = Answers to question if person has or not current asthma
-# EDAD = Category by age 
-# SEXO = Gender reponse
+# AGE = Category by age 
+# SEX = Gender reponse
 # Other variables: Education, income, civil status, if smoke or not, health region and Body Mass.
 
 # A change to the original data is needed
-levels(data$EDAD)[6] <- "65>" #  Change the category of age of 65< to 65>
+levels(data$AGE)[6] <- "65>" #  Change the category of age of 65< to 65>
 
 
 summary(data$Asma) # Observe that we do not have the information of asthma for 10 respondents.
@@ -41,7 +44,7 @@ summary(data$Asma) # Observe that we do not have the information of asthma for 1
 data <- data[data$Asma!='#N/A',] # The respondents that do not have information of asthma are deleted.
 data$Asma = droplevels(data$Asma) # Delete the level #N/A of the variable "asma".
 
-tab = with(data, table(EDAD, SEXO, Asma)) # summarize current asthma data, by sex or by age.
+tab = with(data, table(AGE, SEX, Asma)) # summarize current asthma data, by sex or by age.
 ftable(tab) # Print the previous frequency table but more organized.
 tab = addmargins(tab) # The marginal frequency by age and by sex of the respondent is added. Furthermore, the frequencies for all the respondent by age and sex and the marginals are obtained
 prev = tab[,,"Yes"]/tab[,,'Sum']*100 # Calculates the prevalence (in percentage) of current asthma of the repondent by age and sex.
