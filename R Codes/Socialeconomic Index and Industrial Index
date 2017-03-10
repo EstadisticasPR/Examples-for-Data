@@ -1,5 +1,5 @@
 ##############################################################################
-# We used the free program of statistics analysis R. to compare the socialeconomic index and the industrial index
+# We used the open source program for statistical analysis statistics analysis, R. to compare the socialeconomic index and the industrial index
 # for each municipality in Puerto Rico . 
 # R or RStudio for windows can be downloaded at https://cran.r-project.org/bin/windows/base/ 
 # or https://www.rstudio.com/products/rstudio/download3/. This code runs in R 3.3.1 
