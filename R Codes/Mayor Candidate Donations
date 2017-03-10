@@ -1,5 +1,5 @@
 ##############################################################################
-#  We used the analytical statistics free program R to find which 
+#  The open source software R is used to find which 
 # political mayor candidates got the highest donations during 2013-2016. R or RStudio for windows can be downloaded here:
 # https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
 #  Note that in addition to the data about donations we need the population to calculate the donation index
