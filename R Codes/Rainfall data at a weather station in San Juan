@@ -1,19 +1,25 @@
 ##############################################################################
-# We use the open source software for statistical analysis called R to explore
-# rainfall data at a weather station. R or RStudio for Windows can be downloaded at 
-# https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
-# This code was ran on R 3.3.1 January, 30, 2017. 
-# In contrast to other codes we have made available this code requires the user sets up an account with
+# We use the open source software for statistical analysis called R to asess
+# the relationship of drought conditions between locations. 
+# R or RStudio for Windows can be downloaded at 
+# https://cran.r-project.org/bin/windows/base/ or https://www.rstudio.com/products/rstudio/download3/
+# This code ran on R 3.3.1 February, 4, 2017. 
+#
+# In contrast to other codes we have made available, this code requires the user sets up an account with
 # NOAA by going to https://www.ncdc.noaa.gov/cdo-web/token
-# If an error shows while running this code, verify the version of your data and R, since changes may have occured.
-# Also keep in mind that access to the internet is required to access the data
+# 
+# BE AWARE that this code will first extract rainfall data from all stations available in Puerto Rico.
+# This may take a few minutes to run!
+#
+# If an error shows while running this code, verify the version of your data, R, 
+# and necessary packages since changes in these may have occured.
+# Also keep in mind that access to the internet is required to extract the data
 # Created by Roberto Rivera, roberto.rivera30@upr.edu
 
-#NOTE: Each line starts with "#" R detects it as a comment.
+#NOTE: Each line that starts with "#" R detects it as a comment.
 
-#We first prepare the necessary R packages for the example.
-
-# A function is created to install necessary R packages for this application. Function originally provided at https://gist.github.com/stevenworthington/3178163
+#We first create a function that checks if packages are installed, if they aren't, they installed and loaded 
+#The function was originally provided at https://gist.github.com/stevenworthington/3178163
 ipak <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg)) 
@@ -21,114 +27,196 @@ ipak <- function(pkg){
   sapply(pkg, require, character.only = TRUE)
 }
 
-# check if packages are installed, if they aren't, install and load
-packages <- c("RSocrata","rnoaa", "dplyr", "zoo","xts","hydroTSM")
-ipak(packages) #install required packages
+# load/install the necessary R packages for the case study.
+packages <- c("RSocrata","rnoaa", "devtools", "reshape2", "dplyr", "zoo", "forecast","tseries","fracdiff","taRifx","ggplot2","SCI", "RColorBrewer","ggmap")
+ipak(packages) #install or load required packages
 
-# NOAA requires a key (password) for the user to access their weather station data. Get NOAA key at https://www.ncdc.noaa.gov/cdo-web/token
-options(noaakey="INSERT KEY WITHIN THESE QUOTES") #
+# Make sure you get your key to access NOAAs database: https://www.ncdc.noaa.gov/cdo-web/token
+options(noaakey="INSERT KEY WITHIN THESE QUOTES") #Enter your own NOAA key to the right
 
-station <-read.socrata("https://data.pr.gov/Permisos-y-Ambiente/Weather-Stations-Active-and-inactive-/9na3-9brj") # Loads the rainfall data directly from the portal.
-#station<-station[station$Active=="Yes",] # If you wanted to focus just on active stations you can run this command
+# next, get station info
+station <- read.socrata("https://data.pr.gov/Permisos-y-Ambiente/Weather-Stations-Active-and-inactive-/9na3-9brj")
+
 
 # The following 3 lines of code will identify all PR stations
 #(stations <- ghcnd_stations())
 #who<-stations %>% filter(state == "PR") #who$id is station ids, who$elevation is elevation of stations, etc.
 #unique(who$id) #192 unique stations, the ones available at data.pr.gov
 
-i=which(station[,1]=="RQW00011641")# San Juan airport station
+niter <- nrow(station) #define object with number of stations
 
-# In what follows we assess the days a month with data available at San Juan airport station
-stationpre <- ghcnd(stationid=station[i,1]) # Access daily weather data from NOAA's FTP server for the San Juan airport station
-
-dat_day <- stationpre%>%filter(element=="PRCP") # filter to just get rainfall data
-
-# organize data
-dat_day <- dat_day[,order(names(dat_day))]
-
-# The two functions below will turn a factor variable to numeric
-asNumeric <- function(x) as.numeric(as.character(x))
-factorsNumeric <- function(d) modifyList(d, lapply(d[, sapply(d, is.factor)], asNumeric))    
-dat2 <- factorsNumeric(dat_day[,97:127])
-
-dat_day$month <- month.abb[dat_day$month] # Changes month format from numeric to the corresponding abbreviated name of the month
-dat_day$date <- as.Date(paste("1",dat_day$month,dat_day$year,sep="/"),format="%d/%b/%Y") #creates the variable date
-
-# Calculate "days with data per month"
-dayspermonth<-apply(dat2, MARGIN = 1, FUN = function(x) length(x[!is.na(x)]) )
-dayspermonth<-zoo(dayspermonth,dat_day$date)
-
-# Lets check if there is rainfall data for the 12 months of each year.
-Yrs = as.Date(index(dayspermonth), format = "%Y-%m-%d")
-Yrs = format(Yrs,format= "%Y")
-which(table(Yrs)!=12) # Every year is ok up to 2016
-
-plot(dayspermonth, ylab="Días por mes", xlab="Fecha") #this figure should show a fixed pattern. It generally does, except Oct 1997 missing a few days and Oct 2016 with only rainfaill for one day
-
-
-# For comparison we also plot the days/month for the San Juan city station
-j=which(station[,1]=="RQW00011631")
-stationpre <- ghcnd(stationid=station[j,1])
-
-dat_day <- stationpre%>%filter(element=="PRCP")
-
-# organize data
-dat_day <- dat_day[,order(names(dat_day))]
-
-dat2<-factorsNumeric(dat_day[,97:127])
-
-dat_day$month <- month.abb[dat_day$month]
-dat_day$date <- as.Date(paste("1",dat_day$month,dat_day$year,sep="/"),format="%d/%b/%Y")
-# Calculate "days with data per month"
-dayspermonth <- apply(dat2, MARGIN = 1, FUN = function(x) length(x[!is.na(x)]) )
-dayspermonth <- zoo(dayspermonth,dat_day$date)
-
-# Lets check if there is rainfall data for the 12 months of each year.
-Yrs = as.Date(index(dayspermonth), format = "%Y-%m-%d")
-Yrs = format(Yrs,format= "%Y")
-which(table(Yrs)!=12) # There are 5 years with missing months
-
-# The next three lines will add the missing months and a NA as the corresponding number of days to the time series
-len_obj<-round(as.numeric(difftime("1977-12-01","1916-01-01")))
-dat_obj <- zoo(1:len_obj, seq(from = as.Date("1916-01-01"),
-                              to = as.Date("1977-12-01"), by = "1 month"))
-dayspermonth = cbind(dayspermonth, dat_obj)
-plot(x = index(dayspermonth), y = dayspermonth$dayspermonth, ylab="Días por mes", xlab="Fecha", type="l")#this figure should show a fixed pattern. But we obseve that the data is incomplete for this particular station. For example, there is no data from 1924 to 1949.
-
-
-#####################################################################################################################
-
-# Weather station data can have three type of scenarios with the data: it has a date with a rain amount,
-# it has a date with a missing value, or the date (and thus rain) record is missing. When the date is missing, the monthly 
-# and annual accumulations can be misleading since the commands below do not recognize the missing months. To deal with this
-# we first create a generic time series object with a starting date as far as the PR station data goes. Then we will 
-# merge this object with the rain station data. This will ensure that the missing dates with missing rain are also
-# considered when summarizing total monthly and annual rain.
+#create generic zoo object to concatenate prcp data
 
 len_obj<-round(as.numeric(difftime(Sys.Date(),"1899-05-01")))
 
-dat_obj <- zoo(1:len_obj, seq(from = as.Date("1899-05-01"),
-                              to = Sys.Date(), by = "1 day"))
+allstations <- zoo(1:len_obj, seq(from = as.Date("1899-05-01"),
+    to = Sys.Date(), by = "1 day"))
 
-# To summarize monthly and annual rainfall at San Juan aiport station, we obtain the daily data again but in a more convenient form  
-dat<-meteo_tidy_ghcnd(stationid = station[i,1], var = "prcp")
-dat$prcp<-dat$prcp/10 #change from tenths of a mm to mm
-stationPRCP<-zoo(dat$prcp,dat$date) #create a type of object that represents a time series
-stationPRCP<-cbind(dat_obj,stationPRCP) #merge the time series object to the rain station data
+# the following loop extracts the rain data from each station from NOAA's ftp site
+# WARNING: loop may take a while to run
+for (i in 1:niter) {
+  
+    # To summarize monthly and annual rainfall at San Juan aiport, we obtain the daily data again but in a more convenient form  
+    dat<-meteo_tidy_ghcnd(stationid = station[i,1], var = "prcp")
+   dat$prcp<-dat$prcp/10 #change from tenths of a mm to mm
+   stationPRCP<-zoo(dat$prcp,dat$date) #create a type of object that represents a time series
+    
 
-stationPRCP<-window(stationPRCP[,2],start=dat$date[1],end="2015-12-31") #extracts the data up to December 31, 2015
+    
 
-# If we wanted monthly total rainfall summary we could run the two lines below
-#monthlyprcp<-daily2monthly(stationPRCP,FUN="sum",na.rm=F)
-#boxplot(ts(monthlyprcp,frequency=12)~cycle(ts(monthlyprcp,frequency=12))) 
+    if(i==1){#ifelse.zoo not working
+      allstations=stationPRCP
+      name1<-as.character(station[1,1]) #can't use colnames with one column so I just name this station right after loop
+      }else{
+      allstations=cbind(allstations,stationPRCP)
+      colnames(allstations)[i]<-as.character(station[i,1]) 
+      }
+      
+      remove(dat,stationPRCP)
+      print(i)
+    
+  }
+colnames(allstations)[1]<-name1 
+na_count <-sapply(allstations, function(y) sum(length(which(is.na(y))))) #NAs per station
+station_dat_count <- apply(allstations, 1, function(x) sum(!is.na(x))) #Number of stations with data per day
+zeroesperstation<-apply(X=allstations,2,FUN=function(x) length(which(x==0))) #how many zero daily mean/month prcp. If a region has many zeroes, mixture distribution may work best to model rain process
 
-hydroplot(stationPRCP, var.type="Precipitation", main="",
-          pfreq = "ma", from=time(stationPRCP)[1],var.unit="mm",ylab="Precipitation",na.rm=F) #ptype="ts+boxplot"
+allstations_m<-aggregate(allstations,as.Date(as.yearmon(time(allstations))), sum) #aggregate by month
+station_dat_count_m <- apply(allstations_m, 1, function(x) sum(!is.na(x))) #Number of stations with data per month
+par(mfrow=c(2,1)) #set two panel Graph window
+plot(zoo(station_dat_count,index(allstations)),ylab="# of stations without NA",xlab="Date",ylim=c(0,120))
+plot(zoo(station_dat_count_m,index(allstations_m)),ylab="# of stations without NA",xlab="Date",ylim=c(0,120))
 
-# As a way to crosscheck the years with low totals the next few lines will assess the number of days with data available to create annual totals
-annual_rain_sj<-daily2annual(stationPRCP,FUN="sum",na.rm=F)
-annual_rain_sj[which(annual_rain_sj<1000)]
-length(window(stationPRCP,start="1971-01-01",end="1971-12-31"))
-length(window(stationPRCP,start="1972-01-01",end="1972-12-31"))
-length(window(stationPRCP,start="1980-01-01",end="1980-12-31"))
-length(window(stationPRCP,start="1991-01-01",end="1991-12-31")) #all years are fine
+
+# Enough information on monthly totals is needed to estimate Standard Precipitation Index
+# (at least 30 yrs). Moreover, rain totals may change over time. Thus too long of a period may 
+# lead to misleading results. 
+# Based on plots above since 1955 there is consistently rainfall data## available for at least 80 stations
+# and at least 40 stations after 1980.
+allstations_m_sub<-window(allstations_m,start="1956-01-01",end="2015-12-31") # subset time period of interest
+
+#now check which stations have monthly totals for at least 75% of the months (45 years)
+ na_count_s<-sapply(allstations_m_sub, function(y) sum(length(which(is.na(y)))))
+ who<-which(na_count_s<0.25*nrow(allstations_m_sub)) #index of stations with 75% or more of monthly totals available
+ allstations_1956<-allstations_m_sub[,who] #choose the desired subset of stations
+
+ #library(ggmap)
+ # The next few lines will map the weather stations selected 
+ map <- get_map(location = c(Longitude = -66.45, Latitude = 18.25), zoom = 9)
+ subset_stat<-station[who,] #subset of stations to be used in this case study
+ mapPoints <- ggmap(map) +
+   geom_point(aes(x = Longitude, y = Latitude), size=3,data = subset_stat, alpha = .5,
+   color="red")+labs(x="Longitude", y="Latitude")
+   mapPoints #make map
+ 
+#The following section of code obtains the 3 month SPI
+spi3<-matrix(NA,nrow(allstations_1956),ncol(allstations_1956))
+#library(SCI)
+for(z in 1:ncol(allstations_1956)){
+spi.para3 <- fitSCI(allstations_1956[,z],first.mon=1,time.scale=3,distr="gamma",p0=TRUE)
+spi3[,z] <- transformSCI(allstations_1956[,z],first.mon=1,obj=spi.para3)}
+
+spi3<-zoo(spi3,index(allstations_1956)) 
+spi3_s<-spi3 #copy of spi3 to assign it different names (next line below)
+names(spi3_s)<-station[who,2]
+
+yy<-substring(index(spi3_s),1,4) #extract year of measurement
+mm<-substring(index(spi3_s),6,7)  #extract month of measurement
+spi3b<-data.frame(yy,mm,spi3_s)   # create data frame
+
+# To create the heatmaps we adapt the example found in https://benjaminlmoore.wordpress.com/2015/04/09/recreating-the-vaccination-heatmaps-in-r/
+ #library(reshape) #for melt
+
+ alls<-melt(spi3b,id=c("yy","mm"))#create a special data frame
+ 
+
+colnames(alls)[3] <- "station"
+alls$station<-substr(alls$station,1,12)
+alls$station<-gsub(" ", ".", alls$station, fixed = TRUE) #replace spaces in station names for .
+alls$station<-as.factor(alls$station) # make station factors
+alls$station <- factor(alls$station, levels=rev(levels(alls$station))) #sort station names 
+alls$yy=as.numeric(levels(alls$yy))[alls$yy]  #make year numeric
+
+#library(RColorBrewer)
+ cols <- brewer.pal(11, 'RdYlBu')#for color gradient to use in heatmap
+ #library(ggplot2) #necessary to make ggplot
+alls$monthyr<-as.yearmon(index(spi3),"%y-%m") #create mm-yr variable
+# run all lines below to create heatmap (until annotate command)
+ggplot(alls, aes(y=station, x=monthyr, fill=value)) +  
+  geom_tile(aes(linewidth=2), 
+            width=.9, height=.9) + 
+  theme_minimal() +
+    scale_fill_gradientn(colours=cols, limits=c(-2, 2),
+                        breaks=seq(-2, 2, by=1), 
+                        na.value=rgb(246, 246, 246, max=255),
+                        labels=c("-2", "-1","0","1","2"),
+                        guide=guide_colourbar(ticks=T, nbin=50,
+                               barheight=.5, label=T, 
+                               barwidth=10)) +
+  geom_segment(x=1967, xend=1967, y=0, yend=(ncol(allstations_1956)+.5), size=.9) +
+  geom_segment(x=1968, xend=1968, y=0, yend=(ncol(allstations_1956)+.5), size=.9) +
+  geom_segment(x=1994, xend=1994, y=0, yend=(ncol(allstations_1956)+.5), size=.9) +
+  geom_segment(x=1995, xend=1995, y=0, yend=(ncol(allstations_1956)+.5), size=.9) +
+  labs(x="", y="", fill="") +
+  ggtitle("3 month SPI") +
+  theme(legend.position=c(.5, -.1),
+        legend.direction="horizontal",
+        legend.text=element_text(colour="grey20"),
+        plot.margin=grid::unit(c(.5,.5,1.5,.5), "cm"),
+        axis.text.y=element_text(size=8, family="Helvetica", 
+                                 hjust=1),
+        axis.text.x=element_text(size=8,vjust=0),
+        axis.ticks.y=element_blank(),
+        panel.grid=element_blank(),
+        title=element_text(hjust=-.07, face="bold", vjust=1, 
+                           family="Helvetica"),
+        text=element_text(family="URWHelvetica"))+
+        annotate("text", label="Drought of 67", x=1967, y=(ncol(allstations_1956)+2), 
+           vjust=1, hjust=0, size=I(3), family="Helvetica")+
+           annotate("text", label="Drought of 94", x=1994, y=(ncol(allstations_1956)+2), 
+           vjust=1, hjust=0, size=I(3), family="Helvetica")
+           
+           
+# To create yearly average 3 month spi version of heatmap we do the following (until annotate command)
+alls_spi <- alls %>% group_by(station, yy) %>% 
+       summarise(rain=if(all(is.na(value))) NA else
+                 mean(value, na.rm=T)) #to average 3month spi
+ 
+ 
+ 
+ ggplot(alls_spi, aes(y=station, x=yy, fill=rain)) + 
+  geom_tile(colour="white", aes(linewidth=2), 
+            width=.9, height=.9) + theme_minimal() +
+    scale_fill_gradientn(colours=cols, limits=c(-2, 2),
+                        breaks=seq(-2, 2, by=1), 
+                        na.value=rgb(246, 246, 246, max=255),
+                        labels=c("-2", "-1","0","1","2"),
+                        guide=guide_colourbar(ticks=T, nbin=50,
+                               barheight=.5, label=T, 
+                               barwidth=10)) +
+  scale_x_continuous(expand=c(0,0), breaks=seq(1950, 2010, by=10)) +
+  geom_segment(x=1967, xend=1967, y=0, yend=(ncol(allstations_1956)), size=.9) +
+  geom_segment(x=1994, xend=1994, y=0, yend=(ncol(allstations_1956)), size=.9) +
+  geom_segment(x=2015, xend=2015, y=0, yend=(ncol(allstations_1956)), size=.9) +
+  labs(x="", y="", fill="") +
+  ggtitle("Mean 3 month SPI by year") +
+  theme(legend.position=c(.5, -.13),
+        legend.direction="horizontal",
+        legend.text=element_text(colour="grey20"),
+        plot.margin=grid::unit(c(.5,.5,1.5,.5), "cm"),
+        axis.text.y=element_text(size=8, family="Helvetica", 
+                                 hjust=1),
+        axis.text.x=element_text(size=8),
+        axis.ticks.y=element_blank(),
+        panel.grid=element_blank(),
+        title=element_text(hjust=-.07, face="bold", vjust=1, 
+                           family="Helvetica"),
+        text=element_text(family="URWHelvetica"))+
+annotate("text", label="Drought of 67", x=1967, y=(ncol(allstations_1956)+2), 
+           vjust=1, hjust=0, size=I(3), family="Helvetica")+
+          annotate("text", label="Drought of 94", x=1994, y=(ncol(allstations_1956)+2), 
+           vjust=1, hjust=0, size=I(3), family="Helvetica")#+
+           #annotate("text", label="Drought of 15", x=2015, y=(ncol(allstations_1956)+2), 
+           #vjust=1, hjust=0, size=I(3), family="Helvetica") 
+            
+
