@@ -1,0 +1,53 @@
+##############################################################################
+# We use the open source of statistical analysis R to observe and 
+# visualize the number of bankruptcies by Chapter in Puerto Rico
+# from 2001 to 2016.
+#
+# R or R Studio for Windows can be downloaded at: 
+# https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
+# This code ran on R 3.3.1 February, 2017. 
+# If an error shows while running this code, verify the version of your data, R, 
+# and necessary packages since changes in these may have occured.
+# Also keep in mind that access to the internet is required to extract the data
+# Created by: Hilda Calderón, hilda.calderon@upr.edu
+
+# NOTE: Each line that starts with a "#" R detects it as a comment
+
+
+#We first create a function that checks if packages are installed, if they aren't, they installed and loaded 
+#The function was originally provided at https://gist.github.com/stevenworthington/3178163
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# load/install the necessary R packages for the case study.
+packages <- c("RSocrata", "reshape2", "ggplot2", "scales" )
+ipak(packages) # Install or activates required packages
+
+data <- read.socrata("https://www.indicadores.pr/Business/Radicaciones-de-quiebras-por-capitulo-Bankruptcy-f/upwi-yh3s", stringsAsFactors=T) # Loads the data directly from indicadores.pr.
+
+# We change the data structure from wide format to long format, needed to use some R functions
+data_long = melt(data, id.vars=c("Month"), 
+                 measure.vars = paste("Ch..",c(7,11,12,13),sep="")) 
+names(data_long)[1:2] = c("Date","Chapter") # Change two column names
+
+data_long$Date = as.Date(data_long$Date, format = "%Y-%m-%d") # Change to date format the date variable.
+
+oct05<-which( data_long$Date=="2005-10-01");oct05[1]
+ene11<-which( data_long$Date=="2011-01-01");ene11[1]
+sep08<-which( data_long$Date=="2008-09-01");sep08[1]
+
+# The plot of the stacked area using ggplot2
+ggplot(data_long, aes(x=Date,y=value,group=Chapter,fill=Chapter)) +  geom_area(position='stack', alpha=0.4 , size=0.5, colour="black") +  theme_bw()  + scale_x_date(labels = date_format("%b/%y"), breaks = date_breaks(width = "10 month")) + 
+  geom_vline(aes(xintercept=as.numeric(data_long$Date[oct05[1]])), linetype=2) +  geom_text(x = as.numeric(data_long$Date[oct05[1]]), y = 3000,label="Bankruptcy act reform goes into effect Oct/05", hjust=1.1, size=3) +  
+  geom_vline(aes(xintercept=as.numeric(data_long$Date[ene11[1]])), linetype=2) +  geom_text(x = as.numeric(data_long$Date[ene11[1]]), y = 3000,label="Emigration to USA \n increase Jan/11", hjust=1.1, size=3) +
+  geom_vline(aes(xintercept=as.numeric(data_long$Date[sep08[1]])), linetype=2) +  geom_text(x = as.numeric(data_long$Date[sep08[1]]), y = 3000,label="Lehman Brothers\n collapse 08/Sep", hjust=1.1, size=3) +  theme(axis.title.y=element_blank()) + theme(axis.title.y=element_blank(), legend.position = "top") 
+
+# The percentage version of the stacked area plot
+ggplot(data_long, aes(x=Date,y=value,group=Chapter,fill=Chapter)) + geom_area(position='fill', alpha=0.4 , size=0.5, colour="black") +  theme_bw()  + scale_x_date(labels = date_format("%b/%y"), breaks = date_breaks(width = "10 month")) +   
+  geom_vline(aes(xintercept=as.numeric(data_long$Date[oct05[1]])), linetype=2) +  geom_text(x = as.numeric(data_long$Date[oct05[1]]), y = 0.9,label="Bankruptcy act reform goes into effect Oct/05", hjust=1.1, size=3) +
+  geom_vline(aes(xintercept=as.numeric(data_long$Date[ene11[1]])), linetype=2) +  geom_text(x = as.numeric(data_long$Date[ene11[1]]), y = 0.9,label="Emigration to USA \n increase Jan/11", hjust=1.1, size=3) +
+  geom_vline(aes(xintercept=as.numeric(data_long$Date[sep08[1]])), linetype=2) +  geom_text(x = as.numeric(data_long$Date[sep08[1]]), y = 0.9,label="Lehman Brothers\n collapse 08/Sep", hjust=1.1, size=3)  + theme(axis.title.y=element_blank()) +  theme(axis.title.y=element_blank(), legend.position = "top") 
