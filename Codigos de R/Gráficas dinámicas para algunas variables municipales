@@ -42,19 +42,15 @@ dat.6 <- read.socrata("https://www.indicadores.pr/Government/N-mero-de-c-nyugues
 dat.6$Year = format(as.Date(dat.6$Year), "%Y")
 dat.7 <- read.socrata("https://www.indicadores.pr/Government/N-mero-de-ni-os-de-trabajadores-incapacitados-bene/kta6-8gvc", stringsAsFactors = T)
 dat.7$Year = format(as.Date(as.character(dat.7$Year), format="%Y"), "%Y")
-#dat.7$Year = as.Date(paste(as.character(dat.7$Year),"01", "01", sep="-"), format = "%Y-%m-%d")
 dat.8 <- read.socrata("https://www.indicadores.pr/Government/N-mero-de-hombres-de-65-a-os-o-mas-beneficiarios-d/etue-q6i2", stringsAsFactors = T)
 dat.8$Year = format(as.Date(as.character(dat.8$Year), format="%Y"), "%Y")
-#dat.8$Year = as.Date(paste(as.character(dat.8$Year),"01", "01", sep="-"), format = "%Y-%m-%d")
 dat.9 <- read.socrata("https://www.indicadores.pr/Government/N-mero-de-feminas-de-65-a-os-o-mas-beneficiarias-d/6k4g-vq5s", stringsAsFactors = T)
 dat.9$Year = format(as.Date(as.character(dat.9$Year), format="%Y"), "%Y")
-#dat.9$Year = as.Date(paste(as.character(dat.9$Year),"01", "01", sep="-"), format = "%Y-%m-%d")
 dat.10 <- read.socrata("https://www.indicadores.pr/Personal/N-mero-de-Personas-en-Grupo-Trabajador-por-Municip/7dqu-bnch", stringsAsFactors = T)
 dat.10 = dat.10[,c(1,4:81)]
 dat.10$Month = format(as.Date(dat.10$Month), format="%Y")
 dat.10 = aggregate(. ~ Month, data = dat.10, FUN = mean) # Calcula el promedio anual
 names(dat.10)[names(dat.10)=="Month"]="Year"
-#dat.10$Year = as.Date(paste(dat.10$Month,"01", "01", sep="-"), format="%Y-%m-%d")
 names(dat.10) = gsub(".NSA", "", names(dat.10))
 names(dat.10)[names(dat.10)=="Manat"] = "Manati"
 dat.11 <- read.socrata("https://www.indicadores.pr/Personal/Tasa-de-Desempleo-por-Municipio-o-Area-Unemploymen/xxdd-cq6g", stringsAsFactors = T)
@@ -63,7 +59,6 @@ dat.11$Month = format(as.Date(dat.11$Month), format="%Y")
 dat.11[, 2:ncol(dat.11)] = apply(dat.11[, 2:ncol(dat.11)], MARGIN = 2, function(x) as.numeric(gsub("%", "", x)))
 dat.11 = aggregate(. ~ Month, data = dat.11, FUN = mean) # Calcula el promedio anual
 names(dat.11)[names(dat.11)=="Month"]="Year"
-#dat.11$Year = as.Date(paste(dat.11$Month,"01", "01", sep="-"), format="%Y-%m-%d")
 names(dat.11) = gsub(".NSA", "", names(dat.11))
 names(dat.11)[names(dat.11)=="Manat"] = "Manati"
 
@@ -93,7 +88,7 @@ vars = c("Poblacion",
          "Tasa de conyugues de trabajadores retirados participantes del Seguro Social",
          "Tasa de ni~os de trabajadores incapacitados participantes del Seguro Social",
          "Tasa de hombres de 65 a~os o mas participantes del Seguro Social",
-         "Tasa de feminas de 65 anos o mas participantes del Seguro Social",
+         "Tasa de feminas de 65 a~os o mas participantes del Seguro Social",
          "Tasa promedio de personas en el grupo trabajador",
          "Tasa promedio de desempleo")
 
@@ -148,7 +143,8 @@ dat$Year = as.numeric(dat$Year)
 #----------------------------------------
 
 # Crea el motion chart
-mc <- gvisMotionChart(dat, idvar="Municipio", timevar="Year", yvar = "Tasa promedio de desempleo", xvar="Tasa promedio de personas en el grupo trabajador", sizevar = "Poblacion", colorvar='municipio', options=list(width=1000, height=600))
+mc <- gvisMotionChart(dat, idvar="Municipio", timevar="Year", yvar = "Tasa de participantes del Seguro Social", xvar="Tasa promedio de desempleo", sizevar = "Poblacion", colorvar='municipio', options=list(width=800, height=500))
 
 plot(mc) # exhibe el motion chart en su navegador
 
+#cat(mc$html$chart, file="motionchart.html")
