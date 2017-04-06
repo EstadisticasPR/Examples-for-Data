@@ -1,0 +1,119 @@
+##############################################################################
+# We use the open source software for statistical analysis called R  to explore
+# rainfall data at a weather station. R or RStudio for Windows can be downloaded at 
+# https://cran.r-project.org/bin/windows/base/ o https://www.rstudio.com/products/rstudio/download3/
+# This code was ran on R 3.3.1 January, 30, 2017. 
+# In contrast to other codes we have made available this is code requires the user sets up an account with
+# NOAA by going to https://www.ncdc.noaa.gov/cdo-web/token
+# If an error shows while running this code, verify the version of your data and R, since changes may have occured.
+# Also keep in mind that access to the internet is required to access the data
+# Created by Roberto Rivera, roberto.rivera30@upr.edu
+
+#NOTE: Each line starts with "#" R detects it as a comment.
+
+#We first prepare the necessary R packages for the example.
+
+# A function is created to install necessary R packages for this application. Function originally provided at https://gist.github.com/stevenworthington/3178163
+ipak <- function(pkg){
+  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+  if (length(new.pkg)) 
+    install.packages(new.pkg, dependencies = TRUE)
+  sapply(pkg, require, character.only = TRUE)
+}
+
+# check if packages are installed, if they aren't, install and load
+packages <- c("RSocrata","rnoaa", "dplyr", "zoo","xts","hydroTSM")
+ipak(packages) #install required packages
+
+# NOAA requires a key (password) for the user to access their weather station data. Get NOAA key at https://www.ncdc.noaa.gov/cdo-web/token
+options(noaakey="yVvqgXkoSScLNTzvlltgCGGIloJKOmsL")  #options(noaakey="INSERT KEY WITHIN THESE QUOTES") #
+
+
+station <-read.socrata("https://data.pr.gov/Permisos-y-Ambiente/Weather-Stations-Active-and-inactive-/9na3-9brj")
+#station<-station[station$Active=="Yes",] # If you wanted to focus just on active stations you can run this command
+
+# The following 3 lines of code will identify all PR stations
+#(stations <- ghcnd_stations())
+#who<-stations %>% filter(state == "PR") #who$id is station ids, who$elevation is elevation of stations, etc.
+#unique(who$id) #192 unique stations, the ones available at data.pr.gov
+
+i=which(station[,1]=="RQW00011641")#San Juan airport
+
+# In what follows we assess the days a month with data available at San Juan airport station
+stationpre <- ghcnd(stationid=station[i,1])
+    
+    dat_day <- stationpre%>%filter(element=="PRCP") #filter to just get rainfall data
+    
+    # organize data, 
+    dat_day <- dat_day[,order(names(dat_day))]
+    
+# The two functions below will turn a factor variable to numeric
+asNumeric <- function(x) as.numeric(as.character(x))
+    factorsNumeric <- function(d) modifyList(d, lapply(d[, sapply(d, is.factor)],   
+                                                   asNumeric))    
+dat2<-factorsNumeric(dat_day[,97:127])
+
+
+    dat_day$month <- month.abb[dat_day$month]
+    dat_day$date <- as.Date(paste("1",dat_day$month,dat_day$year,sep="/"),format="%d/%b/%Y")
+    # Calculate "days with data per month"
+    dayspermonth<-apply(dat2, MARGIN = 1, FUN = function(x) length(x[!is.na(x)]) )
+     dayspermonth<-zoo(dayspermonth,dat_day$date)
+     plot(dayspermonth, ylab="Dias por mes", xlab="Fecha") #this figure should show a fixed pattern. It generally does, except Oct 1997 missing a few days and November 2016 with only rainfaill for first 21 days
+
+# For comparison we also plot the days/month for the San Juan city station
+j=which(station[,1]=="RQW00011631")
+stationpre <- ghcnd(stationid=station[j,1])
+    
+    dat_day <- stationpre%>%filter(element=="PRCP")
+    
+    # organize data, 
+    dat_day <- dat_day[,order(names(dat_day))]
+        
+dat2<-factorsNumeric(dat_day[,97:127])
+
+
+    dat_day$month <- month.abb[dat_day$month]
+    dat_day$date <- as.Date(paste("1",dat_day$month,dat_day$year,sep="/"),format="%d/%b/%Y")
+    # Calculate "days with data per month"
+    dayspermonth<-apply(dat2, MARGIN = 1, FUN = function(x) length(x[!is.na(x)]) )
+     dayspermonth<-zoo(dayspermonth,dat_day$date)
+     plot(dayspermonth, ylab="Dias por mes", xlab="Fecha")
+
+
+
+#####################################################################################################################
+
+# weather station data can have three type of scenarios with the data: it has a date with a rain amount,
+# it has a date with a missing value, or the date (and thus rain) record is missing. When the date is missing, the monthly 
+# and annual accumulations can be misleading since the commands below do not recognize the missing months. To deal with this
+# ww first create a generic time series object with a starting date as far as the PR station data goes. Then we will 
+# use merge this object with the rain station data. This will ensure that the missing dates with missing rain are also
+# considered when summarizing total monthly and annual rain.
+    
+len_obj<-round(as.numeric(difftime(Sys.Date(),"1899-05-01")))
+
+dat_obj <- zoo(1:len_obj, seq(from = as.Date("1899-05-01"),
+    to = Sys.Date(), by = "1 day"))
+
+    # To summarize monthly and annual rainfall at San Juan aiport, we obtain the daily data again but in a more convenient form  
+    dat<-meteo_tidy_ghcnd(stationid = station[i,1], var = "prcp")
+   dat$prcp<-dat$prcp/10 #change from tenths of a mm to mm
+stationPRCP<-zoo(dat$prcp,dat$date) #create a type of object that represents a time series
+stationPRCP<-cbind(dat_obj,stationPRCP)
+
+stationPRCP<-window(stationPRCP[,2],start=dat$date[1],end="2015-12-31")    
+# If we wanted monthly total rainfaill summary we could run the two lines below
+#monthlyprcp<-daily2monthly(stationPRCP,FUN="sum",na.rm=F)
+#boxplot(ts(monthlyprcp,frequency=12)~cycle(ts(monthlyprcp,frequency=12))) 
+ 
+hydroplot(stationPRCP, var.type="Precipitation", main="",
+           pfreq = "ma", from=time(stationPRCP)[1],var.unit="mm",ylab="Precipitation",na.rm=F) #ptype="ts+boxplot"
+
+# As a way to crosscheck the years with low totals the next few lines will assess the number of days with data available to create annual totals
+annual_rain_sj<-daily2annual(stationPRCP,FUN="sum",na.rm=F)
+annual_rain_sj[which(annual_rain_sj<1000)]
+length(window(stationPRCP,start="1971-01-01",end="1971-12-31"))
+length(window(stationPRCP,start="1972-01-01",end="1972-12-31"))
+length(window(stationPRCP,start="1980-01-01",end="1980-12-31"))
+length(window(stationPRCP,start="1991-01-01",end="1991-12-31")) #all years are fine
