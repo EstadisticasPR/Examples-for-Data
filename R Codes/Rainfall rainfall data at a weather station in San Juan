@@ -59,7 +59,7 @@ dat2<-factorsNumeric(dat_day[,97:127])
     # Calculate "days with data per month"
     dayspermonth<-apply(dat2, MARGIN = 1, FUN = function(x) length(x[!is.na(x)]) )
      dayspermonth<-zoo(dayspermonth,dat_day$date)
-     plot(dayspermonth, ylab="Dias por mes", xlab="Fecha") #this figure should show a fixed pattern. It generally does, except Oct 1997 missing a few days and November 2016 with only rainfaill for first 21 days
+     plot(dayspermonth, ylab="Days per month", xlab="Date") #this figure should show a fixed pattern. It generally does, except Oct 1997 missing a few days and November 2016 with only rainfaill for first 21 days
 
 # For comparison we also plot the days/month for the San Juan city station
 j=which(station[,1]=="RQW00011631")
@@ -78,7 +78,7 @@ dat2<-factorsNumeric(dat_day[,97:127])
     # Calculate "days with data per month"
     dayspermonth<-apply(dat2, MARGIN = 1, FUN = function(x) length(x[!is.na(x)]) )
      dayspermonth<-zoo(dayspermonth,dat_day$date)
-     plot(dayspermonth, ylab="Dias por mes", xlab="Fecha")
+     plot(dayspermonth, ylab="Days per month", xlab="Date")
 
 
 
