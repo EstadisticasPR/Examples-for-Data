@@ -26,7 +26,7 @@ packages <- c("RSocrata","rnoaa", "dplyr", "zoo","xts","hydroTSM")
 ipak(packages) #install required packages
 
 # NOAA requires a key (password) for the user to access their weather station data. Get NOAA key at https://www.ncdc.noaa.gov/cdo-web/token
-options(noaakey="yVvqgXkoSScLNTzvlltgCGGIloJKOmsL")  #options(noaakey="INSERT KEY WITHIN THESE QUOTES") #
+options(noaakey="INSERT KEY WITHIN THESE QUOTES") 
 
 
 station <-read.socrata("https://data.pr.gov/Permisos-y-Ambiente/Weather-Stations-Active-and-inactive-/9na3-9brj")
